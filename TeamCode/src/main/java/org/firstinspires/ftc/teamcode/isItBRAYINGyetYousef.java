@@ -86,5 +86,6 @@ public class isItBRAYINGyetYousef extends OpMode {
     // Code to run ONCE after the driver hits STOP
     @Override
     public void stop() {
+        System.out.println("Alhamdulillah");
     }
 }
