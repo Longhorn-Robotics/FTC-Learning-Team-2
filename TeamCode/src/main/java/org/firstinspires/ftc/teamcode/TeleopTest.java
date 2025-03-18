@@ -6,9 +6,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 @TeleOp(name = "TeleopLite", group = "Pushbot")
 
 public class TeleopTest extends OpMode {
-    public static float bumper_sens;
-    public static double gyro_pos;
-    public static double intake_pos;
+    private static float bumper_sens;
+    private static double intake_pos;
+    private static double gyro_pos;
+    private static double armLowerLimit = 0;
+    private static double armUpperLimit = 1;
+    public static int targetArmPos;
 
     RobotHardwareTest robot = new RobotHardwareTest();
     // Code to run ONCE when the driver hits INIT
@@ -36,21 +39,25 @@ public class TeleopTest extends OpMode {
     // Code to run REPEATEDLY after the driver hits PLAY but before they hit STOP
     @Override
     public void loop() {
-        double arm_power = (gamepad1.left_stick_y + gamepad1.left_stick_y) * 0.2f;
-        double left_power = (gamepad1.right_stick_y + gamepad1.right_stick_x) * 2.0f;
-        double right_power = (gamepad1.right_stick_y - gamepad1.right_stick_x) * 2.0f;
-
+        double arm_power = (gamepad1.left_stick_y) * 0.01f;
+        double left_power = (-gamepad1.right_stick_y + gamepad1.right_stick_x) * 0.1f;
+        double right_power = -(-gamepad1.right_stick_y - gamepad1.right_stick_x) * 0.1f;
         intake_pos += (gamepad1.right_trigger - gamepad1.left_trigger) * 0.005f;
 
         if(gamepad1.right_bumper) {
-            gyro_pos += bumper_sens;
+            gyro_pos = 0.5;
         } else if(gamepad1.left_bumper) {
-            gyro_pos -= bumper_sens;
+            gyro_pos = 0;
         }
 
+        targetArmPos += arm_power;
+        targetArmPos = (int)Math.min(armUpperLimit, targetArmPos);
+        targetArmPos = (int)Math.max(armLowerLimit, targetArmPos);
+        System.out.println(robot.arm.getCurrentPosition());
+
         //Arm and wheels
-        robot.arm.setPower(arm_power);
-        robot.left.setPower(-left_power);
+        robot.arm.setTargetPosition(targetArmPos);
+        robot.left.setPower(left_power);
         robot.right.setPower(right_power);
 
         //Gyro Servo

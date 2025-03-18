@@ -30,15 +30,17 @@ public class RobotHardwareTest {
 
         arm.setDirection(DcMotor.Direction.FORWARD);
         arm.setPower(0);
-        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         left.setDirection(DcMotor.Direction.FORWARD);
         left.setPower(0);
         left.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         right.setDirection(DcMotor.Direction.FORWARD);
         right.setPower(0);
         right.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
     }
 }
