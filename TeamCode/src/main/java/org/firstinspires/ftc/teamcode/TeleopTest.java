@@ -1,5 +1,7 @@
  package org.firstinspires.ftc.teamcode;
 
+import android.util.Log;
+
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -43,14 +45,19 @@ public class TeleopTest extends OpMode {
         double left_power = (-gamepad1.right_stick_y + gamepad1.right_stick_x) * 0.1f;
         double right_power = -(-gamepad1.right_stick_y - gamepad1.right_stick_x) * 0.1f;
         intake_pos += (gamepad1.right_trigger - gamepad1.left_trigger) * 0.005f;
+        //System.out.println(intake_pos);
+
+        Log.d("myTag", "This is my message");
 
         if(gamepad1.right_bumper) {
             gyro_pos = 0.5;
+            System.out.println("right bumper");
         } else if(gamepad1.left_bumper) {
             gyro_pos = 0;
+            Log.d("myTag", "This is my message");
         }
 
-        targetArmPos += arm_power;
+        targetArmPos -= arm_power;
         targetArmPos = (int)Math.min(armUpperLimit, targetArmPos);
         targetArmPos = (int)Math.max(armLowerLimit, targetArmPos);
         System.out.println(robot.arm.getCurrentPosition());
