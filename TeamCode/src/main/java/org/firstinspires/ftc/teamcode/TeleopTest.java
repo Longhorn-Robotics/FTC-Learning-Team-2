@@ -30,7 +30,7 @@ public class TeleopTest extends OpMode {
 
     }
 
-    // Code to run ONCE when the driver hits PLAY
+    // Code to run ONCE when the driver h its PLAY
     @Override
     public void start() {
 
