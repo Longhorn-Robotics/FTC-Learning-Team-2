@@ -30,7 +30,7 @@ public class RobotHardwareTest {
 
         arm.setDirection(DcMotor.Direction.FORWARD);
         arm.setPower(0);
-        arm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         left.setDirection(DcMotor.Direction.FORWARD);
