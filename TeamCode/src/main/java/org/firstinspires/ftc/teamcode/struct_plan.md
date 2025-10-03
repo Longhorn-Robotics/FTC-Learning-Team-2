@@ -9,5 +9,3 @@ Structure:
 
 
 Plan:
-
-Testing123
