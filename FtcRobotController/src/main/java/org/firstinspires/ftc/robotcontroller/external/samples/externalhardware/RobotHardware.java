@@ -38,7 +38,7 @@ import com.qualcomm.robotcore.util.Range;
  * This file works in conjunction with the External Hardware Class sample called: ConceptExternalHardwareClass.java
  * Please read the explanations in that Sample about how to use this class definition.
  *
- * This file defines a Java Class that performs all the setup and configuration for a sample robot's hardware (motors and sensors).
+ * This file defines a Java Class that performs all the setup and  configuration for a sample robot's hardware (motors and sensors).
  * It assumes three motors (left_drive, right_drive and arm) and two servos (left_hand and right_hand)
  *
  * This one file/class can be used by ALL of your OpModes without having to cut & paste the code each time.
