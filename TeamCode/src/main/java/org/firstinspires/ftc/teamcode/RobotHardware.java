@@ -5,9 +5,11 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 
-@TeleOp
+
+//@TeleOp
 
 public class RobotHardware{
     private LinearOpMode initOpMode = null;
@@ -17,6 +19,7 @@ public class RobotHardware{
     private DcMotor RLaunchMotor;
     private DcMotor LIntakeMotor;
     private DcMotor RIntakeMotor;
+    private Servo ReleaseFlap;
 
 
     public double LStickY = 0;
@@ -36,14 +39,28 @@ public class RobotHardware{
         RLaunchMotor = initOpMode.hardwareMap.get(DcMotor.class, "RLaunchMotor");
         LIntakeMotor = initOpMode.hardwareMap.get(DcMotor.class, "LIntakeMotor");
         RIntakeMotor = initOpMode.hardwareMap.get(DcMotor.class, "RIntakeMotor");
+        ReleaseFlap = initOpMode.hardwareMap.get(Servo.class, "ReleaseFlap");
 
-        initOpMode.telemetry.addData("Status", "Initialized");
-        initOpMode.telemetry.update();
     }
 
     public void moveRobot(double LStickY, double RStickY){
         LDriveMotor.setPower(LStickY);
         RDriveMotor.setPower(RStickY);
+    }
+    public void startIntake() {
+        LIntakeMotor.setPower(1);
+        RIntakeMotor.setPower(1);
+    }
+    public void idleLauncher() {
+        ReleaseFlap.setPosition(0);
+        LLaunchMotor.setPower(0.5);
+        RLaunchMotor.setPower(0.5);
+    }
+    //add angle later by changing the speed of the two wheels to change to angle the ball is launched
+    public void launchItems(speed) {
+        LLaunchMotor.setPower(speed);
+        RLaunchMotor.setPower(speed);
+        ReleaseFlap.setPosition(90);
     }
 }
 
