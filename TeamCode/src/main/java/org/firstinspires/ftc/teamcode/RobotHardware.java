@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 public class RobotHardware{
     //Create our robot parts
-    private LinearOpMode linOpMode = null;
+    private LinearOpMode localOpMode = null;
     private DcMotor LDriveMotor;
     private DcMotor RDriveMotor;
     private DcMotor LLaunchMotor;
@@ -24,19 +24,19 @@ public class RobotHardware{
 
 
     public RobotHardware(LinearOpMode opmode) {
-        linOpMode = opmode;
+        localOpMode = opmode;
     }
 
 
     //init our hardware
     public void init() {
-        LDriveMotor = linOpMode.hardwareMap.get(DcMotor.class, "LDriveMotor");
-        RDriveMotor = linOpMode.hardwareMap.get(DcMotor.class, "RDriveMotor");
-        LLaunchMotor = linOpMode.hardwareMap.get(DcMotor.class, "LLaunchMotor");
-        RLaunchMotor = linOpMode.hardwareMap.get(DcMotor.class, "RLaunchMotor");
-        LIntakeMotor = linOpMode.hardwareMap.get(DcMotor.class, "LIntakeMotor");
-        RIntakeMotor = linOpMode.hardwareMap.get(DcMotor.class, "RIntakeMotor");
-        ReleaseFlap = linOpMode.hardwareMap.get(Servo.class, "ReleaseFlap");
+        LDriveMotor = localOpMode.hardwareMap.get(DcMotor.class, "LDriveMotor");
+        RDriveMotor = localOpMode.hardwareMap.get(DcMotor.class, "RDriveMotor");
+        LLaunchMotor = localOpMode.hardwareMap.get(DcMotor.class, "LLaunchMotor");
+        RLaunchMotor = localOpMode.hardwareMap.get(DcMotor.class, "RLaunchMotor");
+        LIntakeMotor = localOpMode.hardwareMap.get(DcMotor.class, "LIntakeMotor");
+        RIntakeMotor = localOpMode.hardwareMap.get(DcMotor.class, "RIntakeMotor");
+        ReleaseFlap = localOpMode.hardwareMap.get(Servo.class, "ReleaseFlap");
 
     }
     //move the robot
@@ -62,7 +62,7 @@ public class RobotHardware{
     public void launchItems(double speed) {
         LLaunchMotor.setPower(speed);
         RLaunchMotor.setPower(speed);
-        linOpMode.sleep(50);
+        localOpMode.sleep(50);
         ReleaseFlap.setPosition(90);
     }
 }

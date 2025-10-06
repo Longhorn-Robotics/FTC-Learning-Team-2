@@ -13,13 +13,16 @@ public class RobotTeleOp extends LinearOpMode{
 
     //Access our robot hardware
     RobotHardware robot = new RobotHardware(this);
-
+    trackArtifacts tracker = new trackArtifacts(this);
     //run our linear op mode
     public void runOpMode() {
         //init hardware
         robot.init();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
+        sleep(10000);
+        tracker.runDetection();
+
 
         //#wait fo the user to press the Play button
         double LStickY = 0;
@@ -51,6 +54,7 @@ public class RobotTeleOp extends LinearOpMode{
             telemetry.addData("Right Stick Y", RStickY);
             telemetry.addData("Launching", RBumper);
             telemetry.addData("Status", "Running");
+            tracker.runDetection();
             telemetry.update();
             sleep(50);
         }
