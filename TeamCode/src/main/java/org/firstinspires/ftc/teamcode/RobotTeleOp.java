@@ -54,6 +54,7 @@ public class RobotTeleOp extends LinearOpMode{
             telemetry.addData("Right Stick Y", RStickY);
             telemetry.addData("Launching", RBumper);
             telemetry.addData("Status", "Running");
+            System.out.println("Running");
             tracker.runDetection();
             telemetry.update();
             sleep(50);

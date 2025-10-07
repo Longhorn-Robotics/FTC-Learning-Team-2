@@ -5,6 +5,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 
 
@@ -62,7 +63,6 @@ public class RobotHardware{
     public void launchItems(double speed) {
         LLaunchMotor.setPower(speed);
         RLaunchMotor.setPower(speed);
-        localOpMode.sleep(50);
         ReleaseFlap.setPosition(90);
     }
 }
