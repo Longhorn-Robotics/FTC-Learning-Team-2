@@ -4,14 +4,13 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-
 
 
 //@TeleOp
 
-public class RobotHardware{
+public class RobotHardware {
     //Create our robot parts
     private LinearOpMode localOpMode = null;
     private DcMotor LDriveMotor;
@@ -24,20 +23,21 @@ public class RobotHardware{
 
 
 
-    public RobotHardware(LinearOpMode opmode) {
-        localOpMode = opmode;
-    }
+    //public RobotHardware2(OpMode opmode) {
+        //localOpMode = opmode;
+    //}
+    public RobotHardware(){};
 
-
+    HardwareMap localHardwareMap;
     //init our hardware
     public void init() {
-        LDriveMotor = localOpMode.hardwareMap.get(DcMotor.class, "LDriveMotor");
-        RDriveMotor = localOpMode.hardwareMap.get(DcMotor.class, "RDriveMotor");
-        LLaunchMotor = localOpMode.hardwareMap.get(DcMotor.class, "LLaunchMotor");
-        RLaunchMotor = localOpMode.hardwareMap.get(DcMotor.class, "RLaunchMotor");
-        LIntakeMotor = localOpMode.hardwareMap.get(DcMotor.class, "LIntakeMotor");
-        RIntakeMotor = localOpMode.hardwareMap.get(DcMotor.class, "RIntakeMotor");
-        ReleaseFlap = localOpMode.hardwareMap.get(Servo.class, "ReleaseFlap");
+        LDriveMotor = localHardwareMap.get(DcMotor.class, "LDriveMotor");
+        RDriveMotor = localHardwareMap.get(DcMotor.class, "RDriveMotor");
+        LLaunchMotor = localHardwareMap.get(DcMotor.class, "LLaunchMotor");
+        RLaunchMotor = localHardwareMap.get(DcMotor.class, "RLaunchMotor");
+        LIntakeMotor = localHardwareMap.get(DcMotor.class, "LIntakeMotor");
+        RIntakeMotor = localHardwareMap.get(DcMotor.class, "RIntakeMotor");
+        ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
 
     }
     //move the robot
