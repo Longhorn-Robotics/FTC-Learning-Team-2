@@ -28,6 +28,8 @@ import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.SortOrder;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -87,7 +89,7 @@ public class trackArtifacts {
     }
 
 
-    public void runDetection() {
+    public List<ColorBlobLocatorProcessor.Blob> runDetection() {
         /* Build a "Color Locator" vision processor based on the ColorBlobLocatorProcessor class.
          * - Specify the color range you are looking for. Use a predefined color, or create your own
          *
@@ -178,86 +180,27 @@ public class trackArtifacts {
                 .setCamera(BuiltinCameraDirection.BACK)
                 .build();
 
-        localOpMode.telemetry.addData("a", "a");
+        //localOpMode.telemetry.addData("a", "a");
         localOpMode.telemetry.setMsTransmissionInterval(100);   // Speed up telemetry updates for debugging.
         localOpMode.telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
+        List<ColorBlobLocatorProcessor.Blob> blobs = colorLocator.getBlobs();
 
-        // WARNING:  To view the stream preview on the Driver Station, this code runs in INIT mode.
-//        while (localOpMode.opModeIsActive() || localOpMode.opModeInInit()) {
-//            localOpMode.telemetry.addData("preview on/off", "... Camera Stream\n");
-//
-//            // Read the current list
-//            List<ColorBlobLocatorProcessor.Blob> blobs = colorLocator.getBlobs();
-//
-//            /*
-//             * The list of Blobs can be filtered to remove unwanted Blobs.
-//             *   Note:  All contours will be still displayed on the Stream Preview, but only those
-//             *          that satisfy the filter conditions will remain in the current list of
-//             *          "blobs".  Multiple filters may be used.
-//             *
-//             * To perform a filter
-//             *   ColorBlobLocatorProcessor.Util.filterByCriteria(criteria, minValue, maxValue, blobs);
-//             *
-//             * The following criteria are currently supported.
-//             *
-//             * ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA
-//             *   A Blob's area is the number of pixels contained within the Contour.  Filter out any
-//             *   that are too big or small. Start with a large range and then refine the range based
-//             *   on the likely size of the desired object in the viewfinder.
-//             *
-//             * ColorBlobLocatorProcessor.BlobCriteria.BY_DENSITY
-//             *   A blob's density is an indication of how "full" the contour is.
-//             *   If you put a rubber band around the contour you would get the "Convex Hull" of the
-//             *   contour. The density is the ratio of Contour-area to Convex Hull-area.
-//             *
-//             * ColorBlobLocatorProcessor.BlobCriteria.BY_ASPECT_RATIO
-//             *   A blob's Aspect ratio is the ratio of boxFit long side to short side.
-//             *   A perfect Square has an aspect ratio of 1.  All others are > 1
-//             *
-//             * ColorBlobLocatorProcessor.BlobCriteria.BY_ARC_LENGTH
-//             *   A blob's arc length is the perimeter of the blob.
-//             *   This can be used in conjunction with an area filter to detect oddly shaped blobs.
-//             *
-//             * ColorBlobLocatorProcessor.BlobCriteria.BY_CIRCULARITY
-//             *   A blob's circularity is how circular it is based on the known area and arc length.
-//             *   A perfect circle has a circularity of 1.  All others are < 1
-//             */
-//            ColorBlobLocatorProcessor.Util.filterByCriteria(
-//                    ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
-//                    50, 20000, blobs);  // filter out very small blobs.
-//
-//            ColorBlobLocatorProcessor.Util.filterByCriteria(
-//                    ColorBlobLocatorProcessor.BlobCriteria.BY_CIRCULARITY,
-//                    0.6, 1, blobs);     /* filter out non-circular blobs.
-//                    * NOTE: You may want to adjust the minimum value depending on your use case.
-//                    * Circularity values will be affected by shadows, and will therefore vary based
-//                    * on the location of the camera on your robot and venue lighting. It is strongly
-//                    * encouraged to test your vision on the competition field if your event allows
-//                    * sensor calibration time.
-//                    */
-//
-//            /*
-//             * The list of Blobs can be sorted using the same Blob attributes as listed above.
-//             * No more than one sort call should be made.  Sorting can use ascending or descending order.
-//             * Here is an example.:
-//             *   ColorBlobLocatorProcessor.Util.sortByCriteria(
-//             *      ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, SortOrder.DESCENDING, blobs);
-//             */
-//
-//            localOpMode.telemetry.addLine("Circularity Radius Center");
-//
-//            // Display the Blob's circularity, and the size (radius) and center location of its circleFit.
-//            for (ColorBlobLocatorProcessor.Blob b : blobs) {
-//
-//                Circle circleFit = b.getCircle();
-//                localOpMode.telemetry.addLine(String.format("%5.3f      %3d     (%3d,%3d)",
-//                           b.getCircularity(), (int) circleFit.getRadius(), (int) circleFit.getX(), (int) circleFit.getY()));
-//            }
-//            localOpMode.telemetry.addData("Status", "Scanning");
-//            localOpMode.telemetry.update();
-//            localOpMode.sleep(100); // Match the telemetry update interval.
-//
-//        }
+
+
+        ColorBlobLocatorProcessor.Util.filterByCriteria(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
+                50, 20000, blobs);  // filter out very small blobs.
+
+        ColorBlobLocatorProcessor.Util.filterByCriteria(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CIRCULARITY,
+                0.6, 1, blobs);
+
+
+         ColorBlobLocatorProcessor.Util.sortByCriteria(
+            ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, SortOrder.DESCENDING, blobs);
+
+
+        return blobs;
     }
 }
 
