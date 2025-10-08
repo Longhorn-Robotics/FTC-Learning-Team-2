@@ -21,6 +21,7 @@ public class RobotAutonomous extends LinearOpMode {
     RobotHardware robot = new RobotHardware();
     trackArtifacts tracker = new trackArtifacts(this);
 
+    createRoute mapper = new createRoute();
     //run our linear op mode
     @Override
     public void runOpMode() {
