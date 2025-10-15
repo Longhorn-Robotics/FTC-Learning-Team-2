@@ -2,9 +2,7 @@
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.vision.opencv.Circle;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 
 import java.util.List;
@@ -21,7 +19,7 @@ public class RobotAutonomous extends LinearOpMode {
     RobotHardware robot = new RobotHardware();
     trackArtifacts tracker = new trackArtifacts(this);
 
-    createRoute mapper = new createRoute();
+    ProcessVisionData mapper = new ProcessVisionData();
     //run our linear op mode
     @Override
     public void runOpMode() {
