@@ -30,7 +30,7 @@ public class RobotHardware {
 
     HardwareMap localHardwareMap;
     //init our hardware
-    public void init() {
+    public void init(HardwareMap localHardwareMap) {
         LDriveMotor = localHardwareMap.get(DcMotor.class, "LDriveMotor");
         RDriveMotor = localHardwareMap.get(DcMotor.class, "RDriveMotor");
         LLaunchMotor = localHardwareMap.get(DcMotor.class, "LLaunchMotor");
