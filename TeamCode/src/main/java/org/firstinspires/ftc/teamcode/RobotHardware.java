@@ -44,11 +44,11 @@ public class RobotHardware {
         RDriveMotor.setDirection(DcMotor.Direction.FORWARD);
     }
     //move the robot
-    public void moveRobot(double LStickY, double RStickY){
-        LDriveMotor.setPower(LStickY);
-        RDriveMotor.setPower(RStickY);
+    public void moveRobot(double LPower, double RPower){
+        LDriveMotor.setPower(LPower);
+        RDriveMotor.setPower(RPower);
     }
-    //Run the flywheel intake
+    //Run the intake
     public void runIntake() {
         IntakeMotor.setPower(1);
     }
