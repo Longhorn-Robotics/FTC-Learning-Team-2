@@ -105,14 +105,15 @@ public class RobotAutoDriveToAprilTagTank {
     final double MAX_AUTO_SPEED = 0.5;   //  Clip the approach speed to this max value (adjust for your robot)
     final double MAX_AUTO_TURN  = 0.25;  //  Clip the turn speed to this max value (adjust for your robot)
 
-    private DcMotor leftDrive   = null;  //  Used to control the left drive wheel
-    private DcMotor rightDrive  = null;  //  Used to control the right drive wheel
+//    private DcMotor leftDrive   = null;  //  Used to control the left drive wheel
+//    private DcMotor rightDrive  = null;  //  Used to control the right drive wheel
 
     private static final boolean USE_WEBCAM = false;  // Set true to use a webcam, or false for a phone camera
     private static final int DESIRED_TAG_ID = -1;    // Choose the tag you want to approach or set to -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
     private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
     private AprilTagDetection desiredTag = null;     // Used to hold the data for a detected AprilTag
+    RobotHardware robot = new RobotHardware();
 
     public void runOpMode(HardwareMap hardwareMap)
     {
@@ -126,23 +127,20 @@ public class RobotAutoDriveToAprilTagTank {
         // Initialize the hardware variables. Note that the strings used here as parameters
         // to 'get' must match the names assigned during the robot configuration.
         // step (using the FTC Robot Controller app on the phone).
-        leftDrive  = hardwareMap.get(DcMotor.class, "LDriveMotor");
-        rightDrive = hardwareMap.get(DcMotor.class, "RDriveMotor");
-
-        // To drive forward, most robots need the motor on one side to be reversed because the axles point in opposite directions.
-        // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
-        // Note: The settings here assume direct drive on left and right wheels.  Single Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+//        leftDrive  = hardwareMap.get(DcMotor.class, "LDriveMotor");
+//        rightDrive = hardwareMap.get(DcMotor.class, "RDriveMotor");
+//
+//        // To drive forward, most robots need the motor on one side to be reversed because the axles point in opposite directions.
+//        // When run, this OpMode should start both motors driving forward. So adjust these two lines based on your first test drive.
+//        // Note: The settings here assume direct drive on left and right wheels.  Single Gear Reduction or 90 Deg drives may require direction flips
+//        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         if (USE_WEBCAM)
             setManualExposure(6, 250);  // Use low exposure time to reduce motion blur
 
         // Wait for the driver to press Start
-        localOpMode.telemetry.addData("Camera preview on/off", "3 dots, Camera Stream");
-        localOpMode.telemetry.addData(">", "Touch START to start OpMode");
-        localOpMode.telemetry.update();
-        localOpMode.waitForStart();
+
 
         while (localOpMode.opModeIsActive())
         {
@@ -172,7 +170,6 @@ public class RobotAutoDriveToAprilTagTank {
 
             // Tell the driver what we see, and what to do.
             if (targetFound) {
-                localOpMode.telemetry.addData("\n>","HOLD Left-Bumper to Drive to Target\n");
                 localOpMode.telemetry.addData("Found", "ID %d (%s)", desiredTag.id, desiredTag.metadata.name);
                 localOpMode.telemetry.addData("Range",  "%5.1f inches", desiredTag.ftcPose.range);
                 localOpMode.telemetry.addData("Bearing","%3.0f degrees", desiredTag.ftcPose.bearing);
@@ -181,7 +178,7 @@ public class RobotAutoDriveToAprilTagTank {
             }
 
             // If Left Bumper is being pressed, AND we have found the desired target, Drive to target Automatically .
-            if (localOpMode.gamepad1.left_bumper && targetFound) {
+            if (targetFound) {
 
                 // Determine heading and range error so we can use them to control the robot automatically.
                 double  rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
@@ -227,8 +224,7 @@ public class RobotAutoDriveToAprilTagTank {
         }
 
         // Send powers to the wheels.
-        leftDrive.setPower(leftPower);
-        rightDrive.setPower(rightPower);
+        robot.moveRobot(leftPower, rightPower);
     }
 
     /**

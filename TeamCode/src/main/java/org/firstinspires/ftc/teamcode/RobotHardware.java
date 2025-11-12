@@ -36,6 +36,13 @@ public class RobotHardware {
         //ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
 
     }
+
+    public void AutoInit (HardwareMap localHardwareMap) {
+        LDriveMotor = localHardwareMap.get(DcMotor.class, "LDriveMotor");
+        RDriveMotor = localHardwareMap.get(DcMotor.class, "RDriveMotor");
+        LDriveMotor.setDirection(DcMotor.Direction.REVERSE);
+        RDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+    }
     //move the robot
     public void moveRobot(double LStickY, double RStickY){
         LDriveMotor.setPower(LStickY);
