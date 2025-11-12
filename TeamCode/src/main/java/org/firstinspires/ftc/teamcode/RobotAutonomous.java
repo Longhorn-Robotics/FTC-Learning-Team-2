@@ -55,26 +55,27 @@ public class RobotAutonomous extends LinearOpMode {
     double  turn            = 0;        // Desired turning power/speed (-1 to +1) +ve is CounterClockwise
 
     // Initialize the Apriltag Detection process
-    initAprilTag();
+
 
     //Access our robot hardware
     RobotHardware robot = new RobotHardware();
     //trackArtifacts tracker = new trackArtifacts(this);
 
-    AprilTagLocalization getPos = new AprilTagLocalization(this);
-    RobotAutoDriveToAprilTagTank driveApril = new RobotAutoDriveToAprilTagTank (this);
+    //AprilTagLocalization getPos = new AprilTagLocalization(this);
+    //RobotAutoDriveToAprilTagTank driveApril = new RobotAutoDriveToAprilTagTank (this);
     //run our linear op mode
     @Override
     public void runOpMode() {
         //init hardware
         robot.init(hardwareMap);
-        getPos.initAprilTag();
+        initAprilTag();
+        //getPos.initAprilTag();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         sleep(10000);
         //tracker.runDetection();
 
-        String state = "Launch";
+        String state = "goToLauncher";
         //#wait fo the user to press the Play button
         waitForStart();
 
@@ -84,9 +85,10 @@ public class RobotAutonomous extends LinearOpMode {
 
 
             switch (state) {
-                case "Launch":
-                    double[] position = getPos.runDetection();
-                    driveApril.runOpMode(hardwareMap);
+                case "goToLauncher":
+                    //double[] position = getPos.runDetection();
+                    //driveApril.runOpMode(hardwareMap);
+                    driveToAprilTag();
                     break;
                 default:
                     break;
@@ -101,7 +103,7 @@ public class RobotAutonomous extends LinearOpMode {
 
     }
 
-    private driveToAprilTag {
+    private void driveToAprilTag (){
         targetFound = false;
         desiredTag  = null;
 
@@ -118,21 +120,21 @@ public class RobotAutonomous extends LinearOpMode {
                     break;  // don't look any further.
                 } else {
                     // This tag is in the library, but we do not want to track it right now.
-                    localOpMode.telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
+                    telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
                 }
             } else {
                 // This tag is NOT in the library, so we don't have enough information to track to it.
-                localOpMode.telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
+                telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
             }
         }
 
         // Tell the driver what we see, and what to do.
         if (targetFound) {
-            localOpMode.telemetry.addData("Found", "ID %d (%s)", desiredTag.id, desiredTag.metadata.name);
-            localOpMode.telemetry.addData("Range",  "%5.1f inches", desiredTag.ftcPose.range);
-            localOpMode.telemetry.addData("Bearing","%3.0f degrees", desiredTag.ftcPose.bearing);
+            telemetry.addData("Found", "ID %d (%s)", desiredTag.id, desiredTag.metadata.name);
+            telemetry.addData("Range",  "%5.1f inches", desiredTag.ftcPose.range);
+            telemetry.addData("Bearing","%3.0f degrees", desiredTag.ftcPose.bearing);
         } else {
-            localOpMode.telemetry.addData("\n>","Drive using joysticks to find valid target\n");
+            telemetry.addData("\n>","Drive using joysticks to find valid target\n");
         }
 
         // If Left Bumper is being pressed, AND we have found the desired target, Drive to target Automatically .
@@ -146,19 +148,19 @@ public class RobotAutonomous extends LinearOpMode {
             drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
 
-            localOpMode.telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
+            telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
         } else {
 
             // drive using manual POV Joystick mode.
-            drive = -localOpMode.gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
-            turn  = -localOpMode.gamepad1.right_stick_x / 4.0;  // Reduce turn rate to 25%.
-            localOpMode.telemetry.addData("Manual","Drive %5.2f, Turn %5.2f", drive, turn);
+            drive = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
+            turn  = -gamepad1.right_stick_x / 4.0;  // Reduce turn rate to 25%.
+            telemetry.addData("Manual","Drive %5.2f, Turn %5.2f", drive, turn);
         }
-        localOpMode.telemetry.update();
+        telemetry.update();
 
         // Apply desired axes motions to the drivetrain.
         moveRobot(drive, turn);
-        localOpMode.sleep(10);
+        sleep(10);
     }
 
 
@@ -199,7 +201,7 @@ public class RobotAutonomous extends LinearOpMode {
         // Create the vision portal by using a builder.
         if (USE_WEBCAM) {
             visionPortal = new VisionPortal.Builder()
-                    .setCamera(localOpMode.hardwareMap.get(WebcamName.class, "Webcam 1"))
+                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                     .addProcessor(aprilTag)
                     .build();
         } else {
@@ -223,30 +225,30 @@ public class RobotAutonomous extends LinearOpMode {
 
         // Make sure camera is streaming before we try to set the exposure controls
         if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
-            localOpMode.telemetry.addData("Camera", "Waiting");
-            localOpMode.telemetry.update();
-            while (!localOpMode.isStopRequested() && (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
-                localOpMode.sleep(20);
+            telemetry.addData("Camera", "Waiting");
+            telemetry.update();
+            while (!isStopRequested() && (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
+                sleep(20);
             }
-            localOpMode.telemetry.addData("Camera", "Ready");
-            localOpMode.telemetry.update();
+            telemetry.addData("Camera", "Ready");
+            telemetry.update();
         }
 
         // Set camera controls unless we are stopping.
-        if (!localOpMode.isStopRequested())
+        if (!isStopRequested())
         {
             ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
             if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
                 exposureControl.setMode(ExposureControl.Mode.Manual);
-                localOpMode.sleep(50);
+                sleep(50);
             }
             exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
-            localOpMode.sleep(20);
+            sleep(20);
             GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
             gainControl.setGain(gain);
-            localOpMode.sleep(20);
-            localOpMode.telemetry.addData("Camera", "Ready");
-            localOpMode.telemetry.update();
+            sleep(20);
+            telemetry.addData("Camera", "Ready");
+            telemetry.update();
         }
     }
 }
