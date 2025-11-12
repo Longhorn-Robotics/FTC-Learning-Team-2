@@ -15,10 +15,8 @@ public class RobotHardware {
     private LinearOpMode localOpMode = null;
     private DcMotor LDriveMotor;
     private DcMotor RDriveMotor;
-    private DcMotor LLaunchMotor;
-    private DcMotor RLaunchMotor;
-    private DcMotor LIntakeMotor;
-    private DcMotor RIntakeMotor;
+    private DcMotor LaunchMotor;
+    private DcMotor IntakeMotor;
     private Servo ReleaseFlap;
 
 
@@ -33,11 +31,9 @@ public class RobotHardware {
     public void init(HardwareMap localHardwareMap) {
         LDriveMotor = localHardwareMap.get(DcMotor.class, "LDriveMotor");
         RDriveMotor = localHardwareMap.get(DcMotor.class, "RDriveMotor");
-        LLaunchMotor = localHardwareMap.get(DcMotor.class, "LLaunchMotor");
-        RLaunchMotor = localHardwareMap.get(DcMotor.class, "RLaunchMotor");
-        LIntakeMotor = localHardwareMap.get(DcMotor.class, "LIntakeMotor");
-        RIntakeMotor = localHardwareMap.get(DcMotor.class, "RIntakeMotor");
-        ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
+        //LaunchMotor = localHardwareMap.get(DcMotor.class, "LaunchMotor");
+        //IntakeMotor = localHardwareMap.get(DcMotor.class, "IntakeMotor");
+        //ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
 
     }
     //move the robot
@@ -47,22 +43,19 @@ public class RobotHardware {
     }
     //Run the flywheel intake
     public void runIntake() {
-        LIntakeMotor.setPower(1);
-        RIntakeMotor.setPower(1);
+        IntakeMotor.setPower(1);
     }
     //set the launcher to a slower speed while we aren't using it, but we don't stop it so it can get back up to speed quickly
     //close the flap to stop balls from rolling into the launcher
     public void idleLauncher() {
         ReleaseFlap.setPosition(0);
-        LLaunchMotor.setPower(0.5);
-        RLaunchMotor.setPower(0.5);
+        LaunchMotor.setPower(0.5);
     }
     //Start the launcher at the given speed
     //Open the flap to allow balls to enter the launcher
     //add angle later by changing the speed of the two wheels to change to angle the ball is launched
     public void launchItems(double speed) {
-        LLaunchMotor.setPower(speed);
-        RLaunchMotor.setPower(speed);
+        LaunchMotor.setPower(speed);
         ReleaseFlap.setPosition(90);
     }
 }

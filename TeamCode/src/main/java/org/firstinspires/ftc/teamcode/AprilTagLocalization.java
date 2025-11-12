@@ -68,7 +68,7 @@ public class AprilTagLocalization {
     private VisionPortal visionPortal;
 
 
-    private void initAprilTag() {
+    public void initAprilTag() {
 
         aprilTag = new AprilTagProcessor.Builder()
                 .setCameraPose(cameraPosition, cameraOrientation)
