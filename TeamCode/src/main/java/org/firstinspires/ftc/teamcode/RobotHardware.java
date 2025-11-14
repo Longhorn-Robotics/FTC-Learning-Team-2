@@ -29,8 +29,8 @@ public class RobotHardware {
     HardwareMap localHardwareMap;
     //init our hardware
     public void init(HardwareMap localHardwareMap) {
-        LDriveMotor = localHardwareMap.get(DcMotor.class, "LDriveMotor");
-        RDriveMotor = localHardwareMap.get(DcMotor.class, "RDriveMotor");
+        LDriveMotor = localHardwareMap.get(DcMotor.class, "motora");
+        RDriveMotor = localHardwareMap.get(DcMotor.class, "motorb");
         //LaunchMotor = localHardwareMap.get(DcMotor.class, "LaunchMotor");
         //IntakeMotor = localHardwareMap.get(DcMotor.class, "IntakeMotor");
         //ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
@@ -38,8 +38,8 @@ public class RobotHardware {
     }
 
     public void AutoInit (HardwareMap localHardwareMap) {
-        LDriveMotor = localHardwareMap.get(DcMotor.class, "LDriveMotor");
-        RDriveMotor = localHardwareMap.get(DcMotor.class, "RDriveMotor");
+        LDriveMotor = localHardwareMap.get(DcMotor.class, "motorb");
+        RDriveMotor = localHardwareMap.get(DcMotor.class, "motora");
         LDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         RDriveMotor.setDirection(DcMotor.Direction.FORWARD);
     }
