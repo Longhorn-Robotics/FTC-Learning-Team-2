@@ -27,6 +27,7 @@ import android.util.Size;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.SortOrder;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -219,7 +220,24 @@ public class ConceptVisionColorLocator_Circle extends LinearOpMode {
                     * encouraged to test your vision on the competition field if your event allows
                     * sensor calibration time.
                     */
+            List<ColorBlobLocatorProcessor.Blob> blobs = colorLocator.getBlobs();
 
+
+
+            ColorBlobLocatorProcessor.Util.filterByCriteria(
+                    ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
+                    50, 20000, blobs);  // filter out very small blobs.
+
+            ColorBlobLocatorProcessor.Util.filterByCriteria(
+                    ColorBlobLocatorProcessor.BlobCriteria.BY_CIRCULARITY,
+                    0.6, 1, blobs);
+
+
+            ColorBlobLocatorProcessor.Util.sortByCriteria(
+                    ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, SortOrder.DESCENDING, blobs);
+
+
+            return blobs;
             /*
              * The list of Blobs can be sorted using the same Blob attributes as listed above.
              * No more than one sort call should be made.  Sorting can use ascending or descending order.
