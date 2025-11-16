@@ -235,21 +235,18 @@ public class RobotAutonomous extends LinearOpMode {
 //            turn  = -gamepad1.right_stick_x / 4.0;  // Reduce turn rate to 25%.
 //            telemetry.addData("Manual","Drive %5.2f, Turn %5.2f", drive, turn);
             //the code is designed such that if the speed is greated than 1 (which is over our max), it knows it doesn't see the tag
-            drive = 2;
+            return "No AprilTag!";
         }
         telemetry.update();
 
         // Apply desired axes motions to the drivetrain.
-        if (drive < 0.1){
+        if (drive < 3){
             return "Done";
         }
-        else if (drive <= 1) {
+        else {
             moveRobot(drive, turn);
             sleep(10);
             return "Driving";
-        }
-        else {
-            return "No AprilTag!";
         }
     }
 
@@ -399,6 +396,57 @@ public class RobotAutonomous extends LinearOpMode {
                 circlesList.add(circleData);
             }
         return circlesList;
+    }
+
+
+
+
+
+
+
+    private String driveToClosestBall (double DESIRED_DISTANCE){
+        targetFound = false;
+        desiredTag  = null;
+
+        // Step through the list of detected tags and look for a matching tag
+        List<int[]> currentDetections = findArtifacts();
+
+        if (currentDetections.size() < 1) {
+            return "No Balls!";
+        }
+
+        if (targetFound) {
+
+            // Determine heading and range error so we can use them to control the robot automatically.
+            double  rangeError   = (   PUT_THE_DISTANCE_TO_THE_BALL_HERE ( in inches)   - DESIRED_DISTANCE);
+            double  headingError = PUT_THE_HORIZONTAL_DEGRESS_THE_ROBOT_NEEDS_TO_TURN_HERE (left is -180, right is 180, straight is 0)   ;
+
+            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
+            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+
+            telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
+        } else {
+
+            // drive using manual POV Joystick mode.
+            //IF THE ROBOT DOES NOT SEE AN APRIL TAG
+//            drive = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
+//            turn  = -gamepad1.right_stick_x / 4.0;  // Reduce turn rate to 25%.
+//            telemetry.addData("Manual","Drive %5.2f, Turn %5.2f", drive, turn);
+            //the code is designed such that if the speed is greated than 1 (which is over our max), it knows it doesn't see the tag
+            drive = 2;
+        }
+        telemetry.update();
+
+        // Apply desired axes motions to the drivetrain.
+        if (drive < 3){
+            return "Done";
+        }
+        else {
+            moveRobot(drive, turn);
+            sleep(10);
+            return "Driving";
+        }
     }
 }
 
