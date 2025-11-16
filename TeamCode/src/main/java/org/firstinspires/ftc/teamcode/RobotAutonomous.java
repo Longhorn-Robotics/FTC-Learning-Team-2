@@ -123,11 +123,7 @@ public class RobotAutonomous extends LinearOpMode {
 
     //Access our robot hardware
     RobotHardware robot = new RobotHardware();
-    //trackArtifacts tracker = new trackArtifacts(this);
 
-    //AprilTagLocalization getPos = new AprilTagLocalization(this);
-    //RobotAutoDriveToAprilTagTank driveApril = new RobotAutoDriveToAprilTagTank (this);
-    //run our linear op mode
     @Override
     public void runOpMode() {
         //init hardware
@@ -137,15 +133,12 @@ public class RobotAutonomous extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         sleep(10000);
-        //tracker.runDetection();
 
         String state = "goToLaunchZone1";
-        //#wait fo the user to press the Play button
+
         waitForStart();
 
         while (opModeIsActive()) {
-            //read controller data
-
 
 
             switch (state) {
@@ -166,11 +159,7 @@ public class RobotAutonomous extends LinearOpMode {
 
 
 
-
-
-
         }
-
     }
 
     private void driveToBallRow(int rowNumber) {
@@ -198,43 +187,22 @@ public class RobotAutonomous extends LinearOpMode {
                     break;  // don't look any further.
                 } else {
                     // This tag is in the library, but we do not want to track it right now.
-                    telemetry.addData("Skipping", "Tag ID %d is not desired", detection.id);
                 }
             } else {
                 // This tag is NOT in the library, so we don't have enough information to track to it.
-                telemetry.addData("Unknown", "Tag ID %d is not in TagLibrary", detection.id);
             }
         }
 
-        // Tell the driver what we see, and what to do.
         if (targetFound) {
-            telemetry.addData("Found", "ID %d (%s)", desiredTag.id, desiredTag.metadata.name);
-            telemetry.addData("Range",  "%5.1f inches", desiredTag.ftcPose.range);
-            telemetry.addData("Bearing","%3.0f degrees", desiredTag.ftcPose.bearing);
-        } else {
-            telemetry.addData("\n>","Drive using joysticks to find valid target\n");
-        }
-
-        // If Left Bumper is being pressed, AND we have found the desired target, Drive to target Automatically .
-        if (targetFound) {
-
             // Determine heading and range error so we can use them to control the robot automatically.
             double  rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
             double  headingError = desiredTag.ftcPose.bearing;
-
             // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
             drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
 
             telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
         } else {
-
-            // drive using manual POV Joystick mode.
-            //IF THE ROBOT DOES NOT SEE AN APRIL TAG
-//            drive = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
-//            turn  = -gamepad1.right_stick_x / 4.0;  // Reduce turn rate to 25%.
-//            telemetry.addData("Manual","Drive %5.2f, Turn %5.2f", drive, turn);
-            //the code is designed such that if the speed is greated than 1 (which is over our max), it knows it doesn't see the tag
             return "No AprilTag!";
         }
         telemetry.update();
@@ -264,15 +232,15 @@ public class RobotAutonomous extends LinearOpMode {
             leftPower /= max;
             rightPower /= max;
         }
-
         // Send powers to the wheels.
         robot.moveRobot(leftPower, rightPower);
 
     }
 
-    /**
-     * Initialize the AprilTag processor.
-     */
+
+
+
+
     private void initAprilTag() {
         if (USE_WEBCAM)
             setManualExposure(6, 250);
@@ -302,13 +270,9 @@ public class RobotAutonomous extends LinearOpMode {
         }
     }
 
-    /*
-     Manually set the camera gain and exposure.
-     This can only be called AFTER calling initAprilTag(), and only works for Webcams;
-    */
+    //Manually set the camera gain and exposure. This can only be called AFTER calling initAprilTag(), and only works for Webcams;
     private void    setManualExposure(int exposureMS, int gain) {
         // Wait for the camera to be open, then use the controls
-
         if (visionPortal == null) {
             return;
         }
@@ -410,33 +374,16 @@ public class RobotAutonomous extends LinearOpMode {
 
         // Step through the list of detected tags and look for a matching tag
         List<int[]> currentDetections = findArtifacts();
-
         if (currentDetections.size() < 1) {
             return "No Balls!";
         }
 
-        if (targetFound) {
-
-            // Determine heading and range error so we can use them to control the robot automatically.
-            double  rangeError   = (   PUT_THE_DISTANCE_TO_THE_BALL_HERE ( in inches)   - DESIRED_DISTANCE);
-            double  headingError = PUT_THE_HORIZONTAL_DEGRESS_THE_ROBOT_NEEDS_TO_TURN_HERE (left is -180, right is 180, straight is 0)   ;
-
-            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
-            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
-
-            telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
-        } else {
-
-            // drive using manual POV Joystick mode.
-            //IF THE ROBOT DOES NOT SEE AN APRIL TAG
-//            drive = -gamepad1.left_stick_y  / 2.0;  // Reduce drive rate to 50%.
-//            turn  = -gamepad1.right_stick_x / 4.0;  // Reduce turn rate to 25%.
-//            telemetry.addData("Manual","Drive %5.2f, Turn %5.2f", drive, turn);
-            //the code is designed such that if the speed is greated than 1 (which is over our max), it knows it doesn't see the tag
-            drive = 2;
-        }
-        telemetry.update();
+        // Determine heading and range error so we can use them to control the robot automatically.
+        double  rangeError   = (   PUT_THE_DISTANCE_TO_THE_BALL_HERE ( in inches)   - DESIRED_DISTANCE);
+        double  headingError = PUT_THE_HORIZONTAL_DEGRESS_THE_ROBOT_NEEDS_TO_TURN_HERE (left is -180, right is 180, straight is 0)   ;
+        // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
+        drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+        turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
 
         // Apply desired axes motions to the drivetrain.
         if (drive < 3){
