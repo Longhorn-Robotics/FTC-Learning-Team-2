@@ -27,7 +27,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.lang.Math;
-
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 //Declare teleop
 @Autonomous(name = "Auto Control", group  = "Robot")
@@ -36,7 +37,16 @@ import java.lang.Math;
 //init and run our teleop
 public class RobotAutonomous extends LinearOpMode {
 
+    AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
 
+    // Adjust Image Decimation to trade-off detection-range for detection-rate.
+    // e.g. Some typical detection data using a Logitech C920 WebCam
+    // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+    // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+    // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
+    // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
+    // Note: Decimation can be changed on-the-fly to adapt during a match.
+    //aprilTag.setDecimation(2);
 
 
     //  Set the GAIN constants to controlxx the relationship between the measured position error, and how much power is
@@ -54,22 +64,63 @@ public class RobotAutonomous extends LinearOpMode {
     private static final boolean USE_WEBCAM = false;  // Set true to use a webcam, or false for a phone camera
     private static final int DESIRED_TAG_ID = -1;    // Choose the tag you want to approach or set to -1 for ANY tag.
     private VisionPortal visionPortal;               // Used to manage the video source.
-    private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
+    //private AprilTagProcessor aprilTag;              // Used for managing the AprilTag detection process.
     private AprilTagDetection desiredTag = null;
 
 
-
+    //GET THE VALUES FOR OUR BALL TRACKING
     //IN INCHES
+    private double ballRadius = 2;
     private int cameraWidth = 320;
     private int cameraHeight = 240;
-    private double ballRadius = 2;
+
+    //Calcualte xf and xy (for the z flip 4) (the operations in the definitons are to covert the units to meters)
+    //The FULL dimensions of the camera sensor
+    private int fullCameraWidth = 3216;
+    private int fullCameraHeight = 2208;
+    //in micrometers (the size of the pixel)
+    private BigDecimal pixelPitchX = new BigDecimal(1.12 * 0.000001);
+    private BigDecimal pixelPitchY = new BigDecimal(1.12 * 0.000001);
+    //in mm (the focal length)
+    private BigDecimal focalLength = new BigDecimal(3.2 * 0.001);
+
+    //perform the calculation
+    //round to SCALE decimal places
+    int roundingScale = 1; // For example, 10 decimal places
+    RoundingMode roundingMode = RoundingMode.HALF_UP;
+    private double fullFocalX = focalLength.divide(pixelPitchX, roundingScale, roundingMode).doubleValue();
+    private double fullFocalY = focalLength.divide(pixelPitchY, roundingScale, roundingMode).doubleValue();
+
+    //Scale down to our deesried reolution
+
+//    private double focalLengthX = fullFocalX * ((double)cameraWidth / fullCameraWidth);
+//    private double focalLengthY = fullFocalY * ((double)cameraHeight / fullCameraHeight);
+
+
+
+
+
+    private double cameraCenterX = (cameraWidth - 1) / 2;
+    private double cameraCEnterY = (cameraHeight - 1) / 2;
+
+    //logitehc c270
+//    private double focalLengthX = 357.1;
+//    private double focalLengthY = 476.2;
+    private double focalLengthX = 251.75;
+    private double focalLengthY = 251.75;
+
+    private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
+
     //The x and y focal lengths of the camera
-    private double xf = 251.75;
-    private double yf = 251.75;
+    //MOTO G4 Play
+//    private double xf = 251.75;
+//    private double yf = 251.75;
+    //Samsung Galaxy Z flip 4 Ultrawide
+//    private double xf = 284.3;
+//    private double yf = 310.7;
     //the average of the focal lengths
-    private double ef = (xf + yf) / 2;
-    private double cx = (cameraWidth - 1) / 2;
-    private double cy = (cameraHeight - 1) / 2;
+//    private double ef = (xf + yf) / 2;
+
 
 
 
@@ -127,9 +178,11 @@ public class RobotAutonomous extends LinearOpMode {
     VisionPortal portal = new VisionPortal.Builder()
             .addProcessor(colorLocatorPurple)
             .addProcessor(colorLocatorGreen)
+            .addProcessor(aprilTag)
             .setCameraResolution(new Size(cameraWidth, cameraHeight))
             //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
             .setCamera(BuiltinCameraDirection.BACK)
+
             .build();
 
 
@@ -269,18 +322,18 @@ public class RobotAutonomous extends LinearOpMode {
         // Note: Decimation can be changed on-the-fly to adapt during a match.
         aprilTag.setDecimation(2);
 
-        // Create the vision portal by using a builder.
-        if (USE_WEBCAM) {
-            visionPortal = new VisionPortal.Builder()
-                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                    .addProcessor(aprilTag)
-                    .build();
-        } else {
-            visionPortal = new VisionPortal.Builder()
-                    .setCamera(BuiltinCameraDirection.BACK)
-                    .addProcessor(aprilTag)
-                    .build();
-        }
+//        // Create the vision portal by using a builder.
+//        if (USE_WEBCAM) {
+//            visionPortal = new VisionPortal.Builder()
+//                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+//                    .addProcessor(aprilTag)
+//                    .build();
+//        } else {
+//            visionPortal = new VisionPortal.Builder()
+//                    .setCamera(BuiltinCameraDirection.BACK)
+//                    .addProcessor(aprilTag)
+//                    .build();
+//        }
     }
 
     //Manually set the camera gain and exposure. This can only be called AFTER calling initAprilTag(), and only works for Webcams;
@@ -414,10 +467,10 @@ public class RobotAutonomous extends LinearOpMode {
 
     private double[] getBallPosition(int xPixel, int yPixel, int rPixel) {
 
-        double distance = (ballRadius * ef) / rPixel;
+        double distance = (ballRadius * averageFocalLengh) / rPixel;
 
         //Horizontal angle
-        double hAngle = Math.toDegrees(Math.atan(xPixel - cx) / xf);
+        double hAngle = Math.toDegrees(Math.atan(xPixel - cameraCenterX) / focalLengthX);
         //double vAngle = Math.toDegrees(Math.atan(yPixel - cy) / yf);
         double[] returnedData = {distance, hAngle};
         return returnedData;
