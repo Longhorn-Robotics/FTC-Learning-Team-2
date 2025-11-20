@@ -3,12 +3,14 @@ package org.firstinspires.ftc.teamcode;
 import android.graphics.Color;
 import android.util.Size;
 
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.SortOrder;
+
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
@@ -23,6 +25,7 @@ import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -30,14 +33,19 @@ import java.lang.Math;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+
 //Declare teleop
 @Autonomous(name = "Auto Control", group  = "Robot")
+
+
 
 
 //init and run our teleop
 public class RobotAutonomous extends LinearOpMode {
 
+
     AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
+
 
     // Adjust Image Decimation to trade-off detection-range for detection-rate.
     // e.g. Some typical detection data using a Logitech C920 WebCam
@@ -49,17 +57,22 @@ public class RobotAutonomous extends LinearOpMode {
     //aprilTag.setDecimation(2);
 
 
+
+
     //  Set the GAIN constants to controlxx the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
     final double SPEED_GAIN =   0.02 ;   //  Speed Control "Gain". e.g. Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
     final double TURN_GAIN  =   0.01 ;   //  Turn Control "Gain".  e.g. Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
 
+
     final double MAX_AUTO_SPEED = 1;   //  Clip the approach speed to this max value (adjust for your robot)
     final double MAX_AUTO_TURN  = 1;  //  Clip the turn speed to this max value (adjust for your robot)
 
+
 //    private DcMotor leftDrive   = null;  //  Used to control the left drive wheel
 //    private DcMotor rightDrive  = null;  //  Used to control the right drive wheel
+
 
     private static final boolean USE_WEBCAM = false;  // Set true to use a webcam, or false for a phone camera
     private static final int DESIRED_TAG_ID = -1;    // Choose the tag you want to approach or set to -1 for ANY tag.
@@ -68,11 +81,14 @@ public class RobotAutonomous extends LinearOpMode {
     private AprilTagDetection desiredTag = null;
 
 
+
+
     //GET THE VALUES FOR OUR BALL TRACKING
     //IN INCHES
     private double ballRadius = 2;
     private int cameraWidth = 320;
     private int cameraHeight = 240;
+
 
     //Calcualte xf and xy (for the z flip 4) (the operations in the definitons are to covert the units to meters)
     //The FULL dimensions of the camera sensor
@@ -84,6 +100,7 @@ public class RobotAutonomous extends LinearOpMode {
     //in mm (the focal length)
     private BigDecimal focalLength = new BigDecimal(3.2 * 0.001);
 
+
     //perform the calculation
     //round to SCALE decimal places
     int roundingScale = 1; // For example, 10 decimal places
@@ -91,7 +108,9 @@ public class RobotAutonomous extends LinearOpMode {
     private double fullFocalX = focalLength.divide(pixelPitchX, roundingScale, roundingMode).doubleValue();
     private double fullFocalY = focalLength.divide(pixelPitchY, roundingScale, roundingMode).doubleValue();
 
+
     //Scale down to our deesried reolution
+
 
 //    private double focalLengthX = fullFocalX * ((double)cameraWidth / fullCameraWidth);
 //    private double focalLengthY = fullFocalY * ((double)cameraHeight / fullCameraHeight);
@@ -100,8 +119,17 @@ public class RobotAutonomous extends LinearOpMode {
 
 
 
+
+
+
+
+
     private double cameraCenterX = (cameraWidth - 1) / 2;
     private double cameraCEnterY = (cameraHeight - 1) / 2;
+
+
+    //OR JUST MANUALLY SET IT
+
 
     //logitehc c270
 //    private double focalLengthX = 357.1;
@@ -109,7 +137,9 @@ public class RobotAutonomous extends LinearOpMode {
     private double focalLengthX = 251.75;
     private double focalLengthY = 251.75;
 
+
     private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
+
 
     //The x and y focal lengths of the camera
     //MOTO G4 Play
@@ -124,10 +154,15 @@ public class RobotAutonomous extends LinearOpMode {
 
 
 
+
+
+
+
     boolean targetFound     = false;    // Set to true when an AprilTag target is detected
     double  drive           = 0;        // Desired forward power/speed (-1 to +1) +ve is forward
     double  turn            = 0;        // Desired turning power/speed (-1 to +1) +ve is CounterClockwise
-    String progress;
+    //String progress;
+
 
     // Initialize the ball Detection process
     private ColorBlobLocatorProcessor colorLocatorPurple = new ColorBlobLocatorProcessor.Builder()
@@ -139,12 +174,16 @@ public class RobotAutonomous extends LinearOpMode {
             .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
             .setBlurSize(5)          // Smooth the transitions between different colors in image
 
+
             // the following options have been added to fill in perimeter holes.
             .setDilateSize(15)       // Expand blobs to fill any divots on the edges
             .setErodeSize(15)        // Shrink blobs back to original size
             .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.CLOSING)
 
+
             .build();
+
+
 
 
     private ColorBlobLocatorProcessor colorLocatorGreen = new ColorBlobLocatorProcessor.Builder()
@@ -156,25 +195,17 @@ public class RobotAutonomous extends LinearOpMode {
             .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
             .setBlurSize(5)          // Smooth the transitions between different colors in image
 
+
             // the following options have been added to fill in perimeter holes.
             .setDilateSize(15)       // Expand blobs to fill any divots on the edges
             .setErodeSize(15)        // Shrink blobs back to original size
             .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.CLOSING)
 
+
             .build();
-    /*
-     * Build a vision portal to run the Color Locator process.
-     *
-     *  - Add the colorLocator process created above.
-     *  - Set the desired video resolution.
-     *      Since a high resolution will not improve this process, choose a lower resolution
-     *      that is supported by your camera.  This will improve overall performance and reduce
-     *      latency.
-     *  - Choose your video source.  This may be
-     *      .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))  .....   for a webcam
-     *  or
-     *      .setCamera(BuiltinCameraDirection.BACK)    ... for a Phone Camera
-     */
+
+
+    //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))  .....   for a webcam
     VisionPortal portal = new VisionPortal.Builder()
             .addProcessor(colorLocatorPurple)
             .addProcessor(colorLocatorGreen)
@@ -183,106 +214,140 @@ public class RobotAutonomous extends LinearOpMode {
             //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
             .setCamera(BuiltinCameraDirection.BACK)
 
+
             .build();
+
+
+
 
 
 
     //Access our robot hardware
     RobotHardware robot = new RobotHardware();
 
+
     @Override
     public void runOpMode() {
         //init hardware
         robot.init(hardwareMap);
         initAprilTag();
-        //getPos.initAprilTag();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         sleep(10000);
 
-        String state = "goToLaunchZone1";
+
+
 
         waitForStart();
 
-        while (opModeIsActive()) {
 
-
-            switch (state) {
-                case "goToLaunchZone1":
-                    //double[] position = getPos.runDetection();
-                    //driveApril.runOpMode(hardwareMap);
-                    progress = driveToAprilTag(12);
-                    if (progress == "Done") {
-                        state = "GoToLaunchZone1";
-                    }
-                    break;
-                case "goToBallRow1":
-                    driveToBallRow(1);
-                    break;
-                default:
-                    break;
-            }
-
-
-
-        }
+        driveToAprilTag(12);
+        navigateAndCollectBallRow(1);
+        driveToAprilTag(12);
     }
 
-    private void driveToBallRow(int rowNumber) {
-        driveToAprilTag(46);
-        while (true) {
+
+    private void navigateAndCollectBallRow(int rowNumber) {
+        if (rowNumber == 1){
+            driveToAprilTag(46);
+        }
+
+
+        collectBallRow();
+        robot.moveRobot(-1, -1);
+
+        if (rowNumber == 1) {
+            sleep(-5000);
+        }
+        return;
+    }
+
+
+
+    private void collectBallRow () {
+
+
+        boolean foundBall = false;
+        while (! foundBall) {
             robot.moveRobot(0.5, -0.5);
+            List<int[]> currentDetections = findArtifacts();
+            int [] closestBall = currentDetections.get(0);
+            double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
+            if (ballLocation[1] < 20 && ballLocation[1] > -20) {
+                foundBall = true;
+            }
         }
-
+        String state;
+        state = driveToClosestBall(3);
+        if (state.equals("No Ball!")) {
+            robot.moveRobot(1,1);
+            sleep(1500);
+            return;
+        }
     }
 
-    private String driveToAprilTag (double DESIRED_DISTANCE){
+
+    private void driveToAprilTag (double DESIRED_DISTANCE){
         targetFound = false;
         desiredTag  = null;
+        String progress = "Driving";
+
 
         // Step through the list of detected tags and look for a matching tag
-        List<AprilTagDetection> currentDetections = aprilTag.getDetections();
-        for (AprilTagDetection detection : currentDetections) {
-            // Look to see if we have size info on this tag.
-            if (detection.metadata != null) {
-                //  Check to see if we want to track towards this tag.
-                if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
-                    // Yes, we want to use this tag.
-                    targetFound = true;
-                    desiredTag = detection;
-                    break;  // don't look any further.
+        while (progress.equals("Driving")){
+            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+            for (AprilTagDetection detection : currentDetections) {
+                // Look to see if we have size info on this tag.
+                if (detection.metadata != null) {
+                    //  Check to see if we want to track towards this tag.
+                    if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+                        // Yes, we want to use this tag.
+                        targetFound = true;
+                        desiredTag = detection;
+                        break;  // don't look any further.
+                    } else {
+                        // This tag is in the library, but we do not want to track it right now.
+                    }
                 } else {
-                    // This tag is in the library, but we do not want to track it right now.
+                    // This tag is NOT in the library, so we don't have enough information to track to it.
                 }
+            }
+
+
+            if (targetFound) {
+                // Determine heading and range error so we can use them to control the robot automatically.
+                double  rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
+                double  headingError = desiredTag.ftcPose.bearing;
+                // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
+                drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+                turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
+
+
+                telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
             } else {
-                // This tag is NOT in the library, so we don't have enough information to track to it.
+                progress = "No AprilTag!";
+                return;
+            }
+            telemetry.update();
+
+
+            // Apply desired axes motions to the drivetrain.
+            if (drive < 3){
+                progress = "Done";
+                return;
+            }
+            else {
+                moveRobot(drive, turn);
+                sleep(10);
+                progress = "Driving";
+                //return "Driving";
             }
         }
-
-        if (targetFound) {
-            // Determine heading and range error so we can use them to control the robot automatically.
-            double  rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-            double  headingError = desiredTag.ftcPose.bearing;
-            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
-            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
-
-            telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
-        } else {
-            return "No AprilTag!";
-        }
-        telemetry.update();
-
-        // Apply desired axes motions to the drivetrain.
-        if (drive < 3){
-            return "Done";
-        }
-        else {
-            moveRobot(drive, turn);
-            sleep(10);
-            return "Driving";
-        }
     }
+
+
+
+
 
 
 
@@ -291,6 +356,7 @@ public class RobotAutonomous extends LinearOpMode {
         // Calculate left and right wheel powers.
         double leftPower    = x - yaw;
         double rightPower   = x + yaw;
+
 
         // Normalize wheel powers to be less than 1.0
         double max = Math.max(Math.abs(leftPower), Math.abs(rightPower));
@@ -301,7 +367,13 @@ public class RobotAutonomous extends LinearOpMode {
         // Send powers to the wheels.
         robot.moveRobot(leftPower, rightPower);
 
+
     }
+
+
+
+
+
 
 
 
@@ -312,7 +384,6 @@ public class RobotAutonomous extends LinearOpMode {
             setManualExposure(6, 250);
         // Create the AprilTag processor by using a builder.
         aprilTag = new AprilTagProcessor.Builder().build();
-
         // Adjust Image Decimation to trade-off detection-range for detection-rate.
         // e.g. Some typical detection data using a Logitech C920 WebCam
         // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
@@ -321,20 +392,8 @@ public class RobotAutonomous extends LinearOpMode {
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
         // Note: Decimation can be changed on-the-fly to adapt during a match.
         aprilTag.setDecimation(2);
-
-//        // Create the vision portal by using a builder.
-//        if (USE_WEBCAM) {
-//            visionPortal = new VisionPortal.Builder()
-//                    .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-//                    .addProcessor(aprilTag)
-//                    .build();
-//        } else {
-//            visionPortal = new VisionPortal.Builder()
-//                    .setCamera(BuiltinCameraDirection.BACK)
-//                    .addProcessor(aprilTag)
-//                    .build();
-//        }
     }
+
 
     //Manually set the camera gain and exposure. This can only be called AFTER calling initAprilTag(), and only works for Webcams;
     private void    setManualExposure(int exposureMS, int gain) {
@@ -342,6 +401,7 @@ public class RobotAutonomous extends LinearOpMode {
         if (visionPortal == null) {
             return;
         }
+
 
         // Make sure camera is streaming before we try to set the exposure controls
         if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
@@ -353,6 +413,7 @@ public class RobotAutonomous extends LinearOpMode {
             telemetry.addData("Camera", "Ready");
             telemetry.update();
         }
+
 
         // Set camera controls unless we are stopping.
         if (!isStopRequested())
@@ -373,34 +434,6 @@ public class RobotAutonomous extends LinearOpMode {
     }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public List<int[]> findArtifacts() {
         List<ColorBlobLocatorProcessor.Blob> blobsPurple = colorLocatorPurple.getBlobs();
         List<ColorBlobLocatorProcessor.Blob> blobsGreen = colorLocatorGreen.getBlobs();
@@ -408,41 +441,41 @@ public class RobotAutonomous extends LinearOpMode {
         blobs.addAll(blobsPurple);
         blobs.addAll(blobsGreen);
 
-            ColorBlobLocatorProcessor.Util.filterByCriteria(
-                    ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
-                    50, 20000, blobs);  // filter out very small blobs.
-            ColorBlobLocatorProcessor.Util.filterByCriteria(
-                    ColorBlobLocatorProcessor.BlobCriteria.BY_CIRCULARITY,
-                    0.6, 1, blobs);
-            ColorBlobLocatorProcessor.Util.sortByCriteria(
-                    ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, SortOrder.DESCENDING, blobs);
+
+        ColorBlobLocatorProcessor.Util.filterByCriteria(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA,
+                50, 20000, blobs);  // filter out very small blobs.
+        ColorBlobLocatorProcessor.Util.filterByCriteria(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CIRCULARITY,
+                0.6, 1, blobs);
+        ColorBlobLocatorProcessor.Util.sortByCriteria(
+                ColorBlobLocatorProcessor.BlobCriteria.BY_CONTOUR_AREA, SortOrder.DESCENDING, blobs);
 
 
-            telemetry.addLine("Circularity Radius Center");
-            List<int[]> circlesList = new ArrayList<>();
-            for (ColorBlobLocatorProcessor.Blob b : blobs) {
-                Circle circleFit = b.getCircle();
-                int[] circleData = {(int) circleFit.getX(), (int)circleFit.getY(), (int)circleFit.getRadius()};
-                circlesList.add(circleData);
-            }
+
+
+        telemetry.addLine("Circularity Radius Center");
+        List<int[]> circlesList = new ArrayList<>();
+        for (ColorBlobLocatorProcessor.Blob b : blobs) {
+            Circle circleFit = b.getCircle();
+            int[] circleData = {(int) circleFit.getX(), (int)circleFit.getY(), (int)circleFit.getRadius()};
+            circlesList.add(circleData);
+        }
         return circlesList;
     }
-
-
-
-
-
 
 
     private String driveToClosestBall (double DESIRED_DISTANCE){
         targetFound = false;
         desiredTag  = null;
 
+
         // Step through the list of detected tags and look for a matching tag
         List<int[]> currentDetections = findArtifacts();
         if (currentDetections.size() < 1) {
             return "No Balls!";
         }
+
 
         // Determine heading and range error so we can use them to control the robot automatically.
         int [] closestBall = currentDetections.get(0);
@@ -453,21 +486,21 @@ public class RobotAutonomous extends LinearOpMode {
         drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
         turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
 
+
         // Apply desired axes motions to the drivetrain.
-        if (drive < 3){
-            return "Done";
-        }
-        else {
-            moveRobot(drive, turn);
-            sleep(10);
-            return "Driving";
-        }
+        moveRobot(drive, turn);
+        sleep(10);
+        return "Driving";
     }
+
+
 
 
     private double[] getBallPosition(int xPixel, int yPixel, int rPixel) {
 
+
         double distance = (ballRadius * averageFocalLengh) / rPixel;
+
 
         //Horizontal angle
         double hAngle = Math.toDegrees(Math.atan(xPixel - cameraCenterX) / focalLengthX);
@@ -476,26 +509,8 @@ public class RobotAutonomous extends LinearOpMode {
         return returnedData;
 
 
+
+
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
