@@ -66,7 +66,7 @@ public class RobotAutonomous extends LinearOpMode {
     final double TURN_GAIN  =   0.01 ;   //  Turn Control "Gain".  e.g. Ramp up to 25% power at a 25 degree error. (0.25 / 25.0)
 
 
-    final double MAX_AUTO_SPEED = 1;   //  Clip the approach speed to this max value (adjust for your robot)
+    final double MAX_AUTO_SPEED = 0.4;   //  Clip the approach speed to this max value (adjust for your robot)
     final double MAX_AUTO_TURN  = 1;  //  Clip the turn speed to this max value (adjust for your robot)
 
 
@@ -134,8 +134,8 @@ public class RobotAutonomous extends LinearOpMode {
     //logitehc c270
 //    private double focalLengthX = 357.1;
 //    private double focalLengthY = 476.2;
-    private double focalLengthX = 251.75;
-    private double focalLengthY = 251.75;
+    private double focalLengthX = 224.1;
+    private double focalLengthY = 224.1;
 
 
     private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
@@ -239,11 +239,15 @@ public class RobotAutonomous extends LinearOpMode {
 
 
         waitForStart();
+        robot.runIntake();
+        while (true) {
+            String state = driveToClosestBall(-1);
+        }
 
 
-        driveToAprilTag(12);
-        navigateAndCollectBallRow(1);
-        driveToAprilTag(12);
+//        driveToAprilTag(12);
+//        navigateAndCollectBallRow(1);
+//        driveToAprilTag(12);
     }
 
 
@@ -257,7 +261,7 @@ public class RobotAutonomous extends LinearOpMode {
         robot.moveRobot(-1, -1);
 
         if (rowNumber == 1) {
-            sleep(-5000);
+            sleep(5000);
         }
         return;
     }
@@ -503,8 +507,11 @@ public class RobotAutonomous extends LinearOpMode {
 
 
         //Horizontal angle
-        double hAngle = Math.toDegrees(Math.atan(xPixel - cameraCenterX) / focalLengthX);
-        //double vAngle = Math.toDegrees(Math.atan(yPixel - cy) / yf);
+        double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthX));
+        //double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
+        telemetry.addData("Distance", distance);
+        telemetry.addData("Angle", hAngle);
+        telemetry.update();
         double[] returnedData = {distance, hAngle};
         return returnedData;
 

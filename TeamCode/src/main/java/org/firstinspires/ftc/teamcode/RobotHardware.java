@@ -32,7 +32,7 @@ public class RobotHardware {
         LDriveMotor = localHardwareMap.get(DcMotor.class, "motora");
         RDriveMotor = localHardwareMap.get(DcMotor.class, "motorb");
         //LaunchMotor = localHardwareMap.get(DcMotor.class, "LaunchMotor");
-        //IntakeMotor = localHardwareMap.get(DcMotor.class, "IntakeMotor");
+        IntakeMotor = localHardwareMap.get(DcMotor.class, "motorc");
         //ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
 
     }
@@ -40,8 +40,10 @@ public class RobotHardware {
     public void AutoInit (HardwareMap localHardwareMap) {
         LDriveMotor = localHardwareMap.get(DcMotor.class, "motorb");
         RDriveMotor = localHardwareMap.get(DcMotor.class, "motora");
+        IntakeMotor = localHardwareMap.get(DcMotor.class, "motorc");
         LDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         RDriveMotor.setDirection(DcMotor.Direction.FORWARD);
+        IntakeMotor.setDirection(DcMotor.Direction.REVERSE);
     }
     //move the robot
     public void moveRobot(double LPower, double RPower){
@@ -50,7 +52,7 @@ public class RobotHardware {
     }
     //Run the intake
     public void runIntake() {
-        IntakeMotor.setPower(1);
+        IntakeMotor.setPower(1000000000);
     }
     //set the launcher to a slower speed while we aren't using it, but we don't stop it so it can get back up to speed quickly
     //close the flap to stop balls from rolling into the launcher
