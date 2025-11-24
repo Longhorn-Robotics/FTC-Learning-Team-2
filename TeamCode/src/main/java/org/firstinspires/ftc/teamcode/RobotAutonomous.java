@@ -33,7 +33,8 @@ import java.lang.Math;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-
+//MIGHT NEED TO REMOVE FOR COMP!!!!!
+import android.media.MediaPlayer;
 //Declare teleop
 @Autonomous(name = "Auto Control", group  = "Robot")
 
@@ -43,6 +44,8 @@ import java.math.RoundingMode;
 //init and run our teleop
 public class RobotAutonomous extends LinearOpMode {
 
+    //MIGHT NEED TO REMOVE FOR COMP!!!
+    //MediaPlayer mediaPlayer;
 
     AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
 
@@ -69,7 +72,7 @@ public class RobotAutonomous extends LinearOpMode {
 
 
     final double MAX_AUTO_SPEED = 0.3;   //  Clip the approach speed to this max value (adjust for your robot)
-    final double MAX_AUTO_TURN  = 1;  //  Clip the turn speed to this max value (adjust for your robot)
+    final double MAX_AUTO_TURN  = 0.3;  //  Clip the turn speed to this max value (adjust for your robot)
 
 
 //    private DcMotor leftDrive   = null;  //  Used to control the left drive wheel
@@ -87,7 +90,7 @@ public class RobotAutonomous extends LinearOpMode {
 
     //GET THE VALUES FOR OUR BALL TRACKING
     //IN INCHES
-    private double ballRadius = 2;
+    private double ballRadius = 2.5;
     private int cameraWidth = 320;
     private int cameraHeight = 240;
 
@@ -239,11 +242,28 @@ public class RobotAutonomous extends LinearOpMode {
 
 
 
+        //MIGHT NEED TO REMOVE FOR COMP!!!
+        MediaPlayer foundBall = MediaPlayer.create(hardwareMap.appContext, R.raw.targetacquired);
+        foundBall.setLooping(false);
+
+        MediaPlayer gotBall = MediaPlayer.create(hardwareMap.appContext, R.raw.heheboy);
+        gotBall.setLooping(false);
+
+
+        String musicState = "FindingBall";
 
         waitForStart();
         robot.runIntake();
         while (opModeIsActive()) {
-            String state = driveToClosestBall(-1);
+            String state = driveToClosestBall(5);
+            if (state.equals("Driving") && musicState.equals("FindingBall")){
+                foundBall.start();
+                musicState = "FoundBall";
+            }
+            else if (state.equals("No Balls!") && musicState.equals("FoundBall")) {
+                gotBall.start();
+                musicState = "FindingBall";
+            }
         }
 
 
