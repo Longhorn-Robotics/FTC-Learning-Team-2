@@ -26,6 +26,7 @@ import org.firstinspires.ftc.vision.opencv.ColorRange;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
 
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -47,7 +48,20 @@ public class RobotAutonomous extends LinearOpMode {
     //MIGHT NEED TO REMOVE FOR COMP!!!
     //MediaPlayer mediaPlayer;
 
-    AprilTagProcessor aprilTag = new AprilTagProcessor.Builder().build();
+    private AprilTagProcessor aprilTag;
+
+
+//    aprilTag = new AprilTagProcessor.Builder().build();
+//
+//    // Adjust Image Decimation to trade-off detection-range for detection-rate.
+//    // e.g. Some typical detection data using a Logitech C920 WebCam
+//    // Decimation = 1 ..  Detect 2" Tag from 10 feet away at 10 Frames per second
+//    // Decimation = 2 ..  Detect 2" Tag from 6  feet away at 22 Frames per second
+//    // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
+//    // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
+//    // Note: Decimation can be changed on-the-fly to adapt during a match.
+//        aprilTag.setDecimation(2);
+
 
 
     // Adjust Image Decimation to trade-off detection-range for detection-rate.
@@ -211,16 +225,18 @@ public class RobotAutonomous extends LinearOpMode {
 
 
     //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))  .....   for a webcam
-    VisionPortal portal = new VisionPortal.Builder()
-            .addProcessor(colorLocatorPurple)
-            .addProcessor(colorLocatorGreen)
-            .addProcessor(aprilTag)
-            .setCameraResolution(new Size(cameraWidth, cameraHeight))
-            //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-            .setCamera(BuiltinCameraDirection.BACK)
-
-
-            .build();
+//    VisionPortal portal = new VisionPortal.Builder()
+//            .addProcessor(colorLocatorPurple)
+//            .addProcessor(colorLocatorGreen)
+//            .addProcessor(aprilTag)
+//            .setCameraResolution(new Size(cameraWidth, cameraHeight))
+//            //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+//
+//            .enableLiveView(true)
+//            .setCamera(BuiltinCameraDirection.BACK)
+//
+//
+//            .build();
 
 
 
@@ -254,17 +270,27 @@ public class RobotAutonomous extends LinearOpMode {
 
         waitForStart();
         robot.runIntake();
-        while (opModeIsActive()) {
-            String state = driveToClosestBall(5);
-            if (state.equals("Driving") && musicState.equals("FindingBall")){
-                foundBall.start();
-                musicState = "FoundBall";
-            }
-            else if (state.equals("No Balls!") && musicState.equals("FoundBall")) {
-                gotBall.start();
-                musicState = "FindingBall";
-            }
-        }
+        driveToAprilTag(36);
+//        while (opModeIsActive()) {
+//            //String state = driveToClosestBall(5);
+//
+//
+//
+//
+//
+//
+//
+////            if (state.equals("Driving") && musicState.equals("FindingBall")){
+////                foundBall.start();
+////                musicState = "FoundBall";
+////            }
+////            else if (state.equals("No Balls!") && musicState.equals("FoundBall")) {
+////                gotBall.start();
+////                musicState = "FindingBall";
+////            }
+//
+//
+//        }
 
 
 //        driveToAprilTag(12);
@@ -316,12 +342,17 @@ public class RobotAutonomous extends LinearOpMode {
     private void driveToAprilTag (double DESIRED_DISTANCE){
         targetFound = false;
         desiredTag  = null;
+        double rangeError;
+        double headingError;
         String progress = "Driving";
 
-
+//        telemetry.addData("Status", "Started");
+//        telemetry.update();
         // Step through the list of detected tags and look for a matching tag
         while (progress.equals("Driving")){
             List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+//            telemetry.addData("Tags", currentDetections);
+//            telemetry.update();
             for (AprilTagDetection detection : currentDetections) {
                 // Look to see if we have size info on this tag.
                 if (detection.metadata != null) {
@@ -339,26 +370,33 @@ public class RobotAutonomous extends LinearOpMode {
                 }
             }
 
-
+//            telemetry.addData("Status", "Scanned");
+//            telemetry.addData("Tags", currentDetections.size());
+//            telemetry.addData("Found", targetFound);
+            telemetry.update();
             if (targetFound) {
                 // Determine heading and range error so we can use them to control the robot automatically.
-                double  rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-                double  headingError = desiredTag.ftcPose.bearing;
+                rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE - DESIRED_DISTANCE);
+                headingError = desiredTag.ftcPose.bearing;
+                telemetry.addData("Distance", rangeError);
+                telemetry.addData("heading", headingError);
+                telemetry.update();
                 // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
                 drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
                 turn  = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN) ;
 
 
-                telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
+//                telemetry.addData("Auto","Drive %5.2f, Turn %5.2f", drive, turn);
+//                telemetry.update();
             } else {
                 progress = "No AprilTag!";
                 return;
-            }
-            telemetry.update();
+           }
+//            telemetry.update();
 
 
             // Apply desired axes motions to the drivetrain.
-            if (drive < 3){
+            if (rangeError < 3 && rangeError > -3){
                 progress = "Done";
                 return;
             }
@@ -386,6 +424,10 @@ public class RobotAutonomous extends LinearOpMode {
 
         // Normalize wheel powers to be less than 1.0
         double max = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+
+//        if (x<0) {
+//            max *= -1;
+//        }
         if (max >1.0) {
             leftPower /= max;
             rightPower /= max;
@@ -418,6 +460,20 @@ public class RobotAutonomous extends LinearOpMode {
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
         // Note: Decimation can be changed on-the-fly to adapt during a match.
         aprilTag.setDecimation(2);
+
+        VisionPortal portal = new VisionPortal.Builder()
+                .addProcessor(colorLocatorPurple)
+                .addProcessor(colorLocatorGreen)
+                .addProcessor(aprilTag)
+                .setCameraResolution(new Size(cameraWidth, cameraHeight))
+                //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+
+                .enableLiveView(true)
+                .setCamera(BuiltinCameraDirection.BACK)
+
+
+                .build();
+
     }
 
 
