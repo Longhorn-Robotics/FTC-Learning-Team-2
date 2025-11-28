@@ -166,12 +166,17 @@ public class RobotAutonomous extends LinearOpMode {
 
     //logitehc c270
 //    private double focalLengthX = 357.1;
-//    private double focalLengthY = 476.2;
-    private double focalLengthX = 224.1;
-    private double focalLengthY = 224.1;
+////    private double focalLengthY = 476.2;
+/// //moto e5 play rear (main) camera
+//    private double focalLengthX = 224.1;
+//    private double focalLengthY = 224.1;
+        //moto e5 play selfie cmaerea (MAYBE)
+    private double focalLengthX = 282.2;
+    private double focalLengthY = 282.2;
 
 
-    private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
+
+private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
 
 
     //The x and y focal lengths of the camera
@@ -249,7 +254,7 @@ public class RobotAutonomous extends LinearOpMode {
                 .addProcessor(aprilTag)
                 .setCameraResolution(new Size(cameraWidth, cameraHeight))
                 .enableLiveView(true)
-                .setCamera(BuiltinCameraDirection.BACK)
+                .setCamera(BuiltinCameraDirection.FRONT)
                 //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
 
 
@@ -305,6 +310,8 @@ public class RobotAutonomous extends LinearOpMode {
         telemetry.update();
         waitForStart();
         robot.runIntake();
+
+
         driveToClosestBall(0);
 
         //driveToAprilTag(36);
