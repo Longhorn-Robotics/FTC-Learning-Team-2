@@ -1,6 +1,7 @@
 //import libraries
 package org.firstinspires.ftc.teamcode;
 import android.graphics.Color;
+import android.hardware.camera2.CameraCharacteristics;
 import android.util.Size;
 
 
@@ -25,7 +26,10 @@ import org.firstinspires.ftc.vision.opencv.Circle;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
-
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 
 import java.util.ArrayList;
@@ -158,7 +162,7 @@ public class RobotAutonomous extends LinearOpMode {
 
 
     private double cameraCenterX = (cameraWidth - 1) / 2;
-    private double cameraCEnterY = (cameraHeight - 1) / 2;
+    private double cameraCenterY = (cameraHeight - 1) / 2;
 
 
     //OR JUST MANUALLY SET IT
@@ -171,12 +175,12 @@ public class RobotAutonomous extends LinearOpMode {
 //    private double focalLengthX = 224.1;
 //    private double focalLengthY = 224.1;
         //moto e5 play selfie cmaerea (MAYBE)
-    private double focalLengthX = 282.2;
-    private double focalLengthY = 282.2;
+    private double focalLengthX = 220.9;
+    private double focalLengthY = 220.9;
 
+    //telemetry.addData("Info", CameraCharacteristics.LENS_FOCAL_LENGTH);
 
-
-private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
+    private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
 
 
     //The x and y focal lengths of the camera
@@ -203,7 +207,7 @@ private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
 
 
     private AprilTagProcessor aprilTag = new AprilTagProcessor.Builder()
-            .setLensIntrinsics(focalLengthX, focalLengthY, cameraCenterX, cameraCEnterY)
+            .setLensIntrinsics(focalLengthX, focalLengthY, cameraCenterX, cameraCenterY)
             // ... these parameters are fx, fy, cx, cy.
             .build();
 
@@ -215,7 +219,7 @@ private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
             .setDrawContours(true)   // Show contours on the Stream Preview
             .setBoxFitColor(0)       // Disable the drawing of rectangles
             .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
-            .setBlurSize(5)          // Smooth the transitions between different colors in image
+            .setBlurSize(5)          // Smooth the transitions between differ=ent colors in image
 
 
             // the following options have been added to fill in perimeter holes.
@@ -432,7 +436,10 @@ private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
             if (targetFound) {
                 // Determine heading and range error so we can use them to control the robot automatically.
                 rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
-                headingError = desiredTag.ftcPose.bearing;
+                //When the phone is sideways
+//                headingError = desiredTag.ftcPose.bearing;
+                //When the phone is the right way around
+                headingError = desiredTag.ftcPose.elevation;
                 telemetry.addData("Distance", rangeError);
                 telemetry.addData("heading", headingError);
                 telemetry.update();
@@ -650,12 +657,15 @@ private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
 
 
         //Horizontal angle
-        double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthX));
-        //double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
+        //Use this when hte phone is sideways
+        //double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthX));
+        //Vertical angle
+        //Use this when the phone is the right way around
+        double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
         telemetry.addData("Distance", distance);
-        telemetry.addData("Angle", hAngle);
+        telemetry.addData("Angle", vAngle);
         telemetry.update();
-        double[] returnedData = {distance, hAngle};
+        double[] returnedData = {distance, vAngle};
         return returnedData;
 
 
