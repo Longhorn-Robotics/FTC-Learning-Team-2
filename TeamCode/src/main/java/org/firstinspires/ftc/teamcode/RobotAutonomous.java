@@ -259,7 +259,7 @@ public class RobotAutonomous extends LinearOpMode {
                 .setCameraResolution(new Size(cameraWidth, cameraHeight))
                 .enableLiveView(true)
                 .setCamera(BuiltinCameraDirection.FRONT)
-                //.setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                //.setCamera(hardwareMap.get(WebcamName.class, "cameraa"))
 
 
                 .build();
@@ -292,9 +292,9 @@ public class RobotAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() {
         //init hardware
-//        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
-//        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
-        //visionPortal.setProcessorEnabled(aprilTag, false);
+        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
+        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
+//        visionPortal.setProcessorEnabled(aprilTag, false);
         robot.init(hardwareMap);
         initAprilTag();
 
@@ -316,38 +316,14 @@ public class RobotAutonomous extends LinearOpMode {
         robot.runIntake();
 
 
-        driveToClosestBall(0);
-
-        //driveToAprilTag(36);
-//        while (opModeIsActive()) {
-//            //String state = driveToClosestBall(5);
-//
-//
-//
-//
-//
-//
-//
-////            if (state.equals("Driving") && musicState.equals("FindingBall")){
-////                foundBall.start();
-////                musicState = "FoundBall";
-////            }
-////            else if (state.equals("No Balls!") && musicState.equals("FoundBall")) {
-////                gotBall.start();
-////                musicState = "FindingBall";
-////            }
-//
-//
-//        }
-
-////        visionPortal.setProcessorEnabled(aprilTag, true);
-//        driveToAprilTag(12);
-////        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
-////        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
-//        navigateAndCollectBallRow(1);
-////        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
-////        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
-//        //driveToAprilTag(12);
+//        visionPortal.setProcessorEnabled(aprilTag, true);
+        driveToAprilTag(12);
+        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
+        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
+        navigateAndCollectBallRow(1);
+        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
+        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
+        driveToAprilTag(12);
     }
 
 
@@ -364,9 +340,48 @@ public class RobotAutonomous extends LinearOpMode {
             sleep(1000);
         }
         robot.moveRobot(0, 0);
+        searchForAprilTag("CW");
         return;
     }
 
+
+    private void searchForAprilTag(String direction) {
+        boolean foundAprilTag = false;
+        //Start mvoing the robot to search for the april tag
+        while (! foundAprilTag) {
+            if (direction.equals("CW")){
+                robot.moveRobot(0.25, -0.25);
+            } else {
+                robot.moveRobot(-0.25, 0.25);
+            }
+
+            //check to find a valid april tag
+            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+//            telemetry.addData("Tags", currentDetections);
+//            telemetry.update();
+            for (AprilTagDetection detection : currentDetections) {
+                // Look to see if we have size info on this tag.
+                if (detection.metadata != null) {
+                    //  Check to see if we want to track towards this tag.
+                    if ((DESIRED_TAG_ID < 0) || (detection.id == DESIRED_TAG_ID)) {
+                        // Yes, we want to use this tag.
+                        desiredTag = detection;
+
+                        //When the phone is the right way around
+                        if (desiredTag.ftcPose.elevation < 20 && desiredTag.ftcPose.elevation > -20) {
+                            foundAprilTag = true;
+                        }
+                        break;  // don't look any further.
+                    } else {
+                        // This tag is in the library, but we do not want to track it right now.
+                    }
+                } else {
+                    // This tag is NOT in the library, so we don't have enough information to track to it.
+                }
+            }
+        }
+
+    }
 
 
     private void collectBallRow () {
