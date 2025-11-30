@@ -127,45 +127,11 @@ public class RobotAutonomous extends LinearOpMode {
     private int cameraHeight = 240;
 
 
-    //Calcualte xf and xy (for the z flip 4) (the operations in the definitons are to covert the units to meters)
-    //The FULL dimensions of the camera sensor
-    private int fullCameraWidth = 3216;
-    private int fullCameraHeight = 2208;
-    //in micrometers (the size of the pixel)
-    private BigDecimal pixelPitchX = new BigDecimal(1.12 * 0.000001);
-    private BigDecimal pixelPitchY = new BigDecimal(1.12 * 0.000001);
-    //in mm (the focal length)
-    private BigDecimal focalLength = new BigDecimal(3.2 * 0.001);
-
-
-    //perform the calculation
-    //round to SCALE decimal places
-    int roundingScale = 1; // For example, 10 decimal places
-    RoundingMode roundingMode = RoundingMode.HALF_UP;
-    private double fullFocalX = focalLength.divide(pixelPitchX, roundingScale, roundingMode).doubleValue();
-    private double fullFocalY = focalLength.divide(pixelPitchY, roundingScale, roundingMode).doubleValue();
-
-
-    //Scale down to our deesried reolution
-
-
-//    private double focalLengthX = fullFocalX * ((double)cameraWidth / fullCameraWidth);
-//    private double focalLengthY = fullFocalY * ((double)cameraHeight / fullCameraHeight);
-
-
-
-
-
-
-
-
-
-
     private double cameraCenterX = (cameraWidth - 1) / 2;
     private double cameraCenterY = (cameraHeight - 1) / 2;
 
 
-    //OR JUST MANUALLY SET IT
+    //OR JUST MANUALLY SET It MANUALLY
 
 
     //logitehc c270
@@ -498,7 +464,7 @@ public class RobotAutonomous extends LinearOpMode {
 
 
 
-    public void moveRobot(double x, double yaw) {
+    private void moveRobot(double x, double yaw) {
         // Calculate left and right wheel powers.
         double leftPower    = x - yaw;
         double rightPower   = x + yaw;
