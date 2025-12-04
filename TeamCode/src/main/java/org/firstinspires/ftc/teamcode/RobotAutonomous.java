@@ -51,7 +51,7 @@ import android.media.MediaPlayer;
 public class RobotAutonomous extends LinearOpMode {
 
     //MIGHT NEED TO REMOVE FOR COMP!!!
-    //MediaPlayer mediaPlayer;
+    MediaPlayer mediaPlayer;
 
 
 
@@ -267,11 +267,11 @@ public class RobotAutonomous extends LinearOpMode {
 
 
         //MIGHT NEED TO REMOVE FOR COMP!!!
-        MediaPlayer foundBall = MediaPlayer.create(hardwareMap.appContext, R.raw.targetacquired);
-        foundBall.setLooping(false);
+        MediaPlayer maxverstappan = MediaPlayer.create(hardwareMap.appContext, R.raw.maxverstappan);
+        maxverstappan.setLooping(false);
 
-        MediaPlayer gotBall = MediaPlayer.create(hardwareMap.appContext, R.raw.heheboy);
-        gotBall.setLooping(false);
+//        MediaPlayer gotBall = MediaPlayer.create(hardwareMap.appContext, R.raw.heheboy);
+//        gotBall.setLooping(false);
 
 
         String musicState = "FindingBall";
@@ -279,6 +279,7 @@ public class RobotAutonomous extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         waitForStart();
+        maxverstappan.start();
         robot.runIntake();
 
 

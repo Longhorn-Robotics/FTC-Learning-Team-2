@@ -1,5 +1,6 @@
 //import libraries
 package org.firstinspires.ftc.teamcode;
+import android.media.MediaPlayer;
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
+import android.media.MediaPlayer;
 
 import java.util.List;
 
@@ -26,6 +28,7 @@ public class RobotTeleOp extends OpMode{
     //Get functions to move the robot
     RobotHardware robot = new RobotHardware();
 
+    private MediaPlayer maxverstappan;
 
     //set up our camera (for driving automatically driving to the AprilTag)
     private static final int DESIRED_TAG_ID = -1;    // Choose the tag you want to approach or set to -1 for ANY tag.
@@ -52,7 +55,11 @@ public class RobotTeleOp extends OpMode{
     //init our hardware
     @Override
     public void init() {
+
+        maxverstappan = MediaPlayer.create(hardwareMap.appContext, R.raw.maxverstappan);
+        maxverstappan.setLooping(false);
         robot.init(hardwareMap);
+        maxverstappan.start();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
     }
