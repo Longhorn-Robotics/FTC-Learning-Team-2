@@ -611,8 +611,7 @@ public class RobotAutonomous extends LinearOpMode {
                 sleep(1000000000);
                 return "No Balls!";
             }
-
-                // Determine heading and range error so we can use them to control the robot automatically.
+            // Determine heading and range error so we can use them to control the robot automatically.penguin
                 int[] closestBall = currentDetections.get(0);
                 double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
                 double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
