@@ -1,22 +1,17 @@
 //import libraries
 package org.firstinspires.ftc.teamcode;
+
 import android.graphics.Color;
-import android.hardware.camera2.CameraCharacteristics;
+import android.media.MediaPlayer;
 import android.util.Size;
 
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.SortOrder;
 
-
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -26,29 +21,19 @@ import org.firstinspires.ftc.vision.opencv.Circle;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.lang.Math;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
-//MIGHT NEED TO REMOVE FOR COMP!!!!!
-import android.media.MediaPlayer;
 //Declare teleop
-@Autonomous(name = "Auto Control", group  = "Robot")
+@Autonomous(name = "Auto Control Dual Camera", group  = "Robot")
 
 
 
 
 //init and run our teleop
-public class RobotAutonomous extends LinearOpMode {
+public class RobotAutonomousDualCameras extends LinearOpMode {
 
     //MIGHT NEED TO REMOVE FOR COMP!!!
     MediaPlayer mediaPlayer;
@@ -141,12 +126,19 @@ public class RobotAutonomous extends LinearOpMode {
 //    private double focalLengthX = 224.1;
 //    private double focalLengthY = 224.1;
         //moto e5 play selfie cmaerea (MAYBE)
-    private double focalLengthX = 220.9;
-    private double focalLengthY = 220.9;
+    private double focalLengthXPhone = 220.9;
+    private double focalLengthYPhone = 220.9;
 
     //telemetry.addData("Info", CameraCharacteristics.LENS_FOCAL_LENGTH);
 
-    private double averageFocalLengh = (focalLengthX + focalLengthY) / 2;
+    private double averageFocalLenghPhone = (focalLengthXPhone + focalLengthYPhone) / 2;
+
+    private double focalLengthXWebcam = 220.9;
+    private double focalLengthYWebcam = 220.9;
+
+    //telemetry.addData("Info", CameraCharacteristics.LENS_FOCAL_LENGTH);
+
+    private double averageFocalLenghWebcam = (focalLengthXWebcam + focalLengthYWebcam) / 2;
 
 
     //The x and y focal lengths of the camera
@@ -172,13 +164,18 @@ public class RobotAutonomous extends LinearOpMode {
     //String progress;
 
 
-    private AprilTagProcessor aprilTag = new AprilTagProcessor.Builder()
-            .setLensIntrinsics(focalLengthX, focalLengthY, cameraCenterX, cameraCenterY)
+    private AprilTagProcessor aprilTagPhone = new AprilTagProcessor.Builder()
+            .setLensIntrinsics(focalLengthXPhone, focalLengthYPhone, cameraCenterX, cameraCenterY)
+            // ... these parameters are fx, fy, cx, cy.
+            .build();
+
+    private AprilTagProcessor aprilTagWebcam = new AprilTagProcessor.Builder()
+            .setLensIntrinsics(focalLengthXWebcam, focalLengthYWebcam, cameraCenterX, cameraCenterY)
             // ... these parameters are fx, fy, cx, cy.
             .build();
 
     // Initialize the ball Detection process
-    private ColorBlobLocatorProcessor colorLocatorPurple = new ColorBlobLocatorProcessor.Builder()
+    private ColorBlobLocatorProcessor colorLocatorPurplePhone = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)   // Use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
             .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))
@@ -196,10 +193,7 @@ public class RobotAutonomous extends LinearOpMode {
 
             .build();
 
-
-
-
-    private ColorBlobLocatorProcessor colorLocatorGreen = new ColorBlobLocatorProcessor.Builder()
+    private ColorBlobLocatorProcessor colorLocatorGreenPhone = new ColorBlobLocatorProcessor.Builder()
             .setTargetColorRange(ColorRange.ARTIFACT_GREEN)   // Use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
             .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))
@@ -218,10 +212,47 @@ public class RobotAutonomous extends LinearOpMode {
             .build();
 
 
-        private VisionPortal visionPortal = new VisionPortal.Builder()
-                .addProcessor(colorLocatorPurple)
-                .addProcessor(colorLocatorGreen)
-                .addProcessor(aprilTag)
+    private ColorBlobLocatorProcessor colorLocatorPurpleWebcam = new ColorBlobLocatorProcessor.Builder()
+            .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)   // Use a predefined color match
+            .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))
+            .setDrawContours(true)   // Show contours on the Stream Preview
+            .setBoxFitColor(0)       // Disable the drawing of rectangles
+            .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
+            .setBlurSize(5)          // Smooth the transitions between differ=ent colors in image
+
+
+            // the following options have been added to fill in perimeter holes.
+            .setDilateSize(15)       // Expand blobs to fill any divots on the edges
+            .setErodeSize(15)        // Shrink blobs back to original size
+            .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.CLOSING)
+
+
+            .build();
+
+    private ColorBlobLocatorProcessor colorLocatorGreenWebcam = new ColorBlobLocatorProcessor.Builder()
+            .setTargetColorRange(ColorRange.ARTIFACT_GREEN)   // Use a predefined color match
+            .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+            .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))
+            .setDrawContours(true)   // Show contours on the Stream Preview
+            .setBoxFitColor(0)       // Disable the drawing of rectangles
+            .setCircleFitColor(Color.rgb(255, 255, 0)) // Draw a circle
+            .setBlurSize(5)          // Smooth the transitions between different colors in image
+
+
+            // the following options have been added to fill in perimeter holes.
+            .setDilateSize(15)       // Expand blobs to fill any divots on the edges
+            .setErodeSize(15)        // Shrink blobs back to original size
+            .setMorphOperationType(ColorBlobLocatorProcessor.MorphOperationType.CLOSING)
+
+
+            .build();
+
+
+        private VisionPortal visionPortalPhone = new VisionPortal.Builder()
+                .addProcessor(colorLocatorPurplePhone)
+                .addProcessor(colorLocatorGreenPhone)
+                .addProcessor(aprilTagPhone)
                 .setCameraResolution(new Size(cameraWidth, cameraHeight))
                 .enableLiveView(true)
                 .setCamera(BuiltinCameraDirection.FRONT)
@@ -229,6 +260,18 @@ public class RobotAutonomous extends LinearOpMode {
 
 
                 .build();
+
+    private VisionPortal visionPortalWebcam = new VisionPortal.Builder()
+            .addProcessor(colorLocatorPurpleWebcam)
+            .addProcessor(colorLocatorGreenWebcam)
+            .addProcessor(aprilTagWebcam)
+            .setCameraResolution(new Size(cameraWidth, cameraHeight))
+            .enableLiveView(true)
+            .setCamera(BuiltinCameraDirection.FRONT)
+            //.setCamera(hardwareMap.get(WebcamName.class, "cameraa"))
+
+
+            .build();
 
 
 
@@ -258,8 +301,8 @@ public class RobotAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() {
         //init hardware
-        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
-        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
+//        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
+//        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
 //        visionPortal.setProcessorEnabled(aprilTag, false);
         robot.init(hardwareMap);
         initAprilTag();
@@ -285,11 +328,11 @@ public class RobotAutonomous extends LinearOpMode {
 
 //        visionPortal.setProcessorEnabled(aprilTag, true);
         driveToAprilTag(12);
-        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
-        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
+//        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
+//        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
         navigateAndCollectBallRow(1);
-        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
-        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
+//        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
+//        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
         driveToAprilTag(12);
     }
 
@@ -422,7 +465,7 @@ public class RobotAutonomous extends LinearOpMode {
             }
 
             //check to find a valid april tag
-            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+            List<AprilTagDetection> currentDetections = aprilTagPhone.getDetections();
 //            telemetry.addData("Tags", currentDetections);
 //            telemetry.update();
             for (AprilTagDetection detection : currentDetections) {
@@ -464,7 +507,7 @@ public class RobotAutonomous extends LinearOpMode {
 //        telemetry.update();
         // Step through the list of detected tags and look for a matching tag
         while (progress.equals("Driving")){
-            List<AprilTagDetection> currentDetections = aprilTag.getDetections();
+            List<AprilTagDetection> currentDetections = aprilTagPhone.getDetections();
 //            telemetry.addData("Tags", currentDetections);
 //            telemetry.update();
             for (AprilTagDetection detection : currentDetections) {
@@ -581,7 +624,8 @@ public class RobotAutonomous extends LinearOpMode {
         // Decimation = 3 ..  Detect 2" Tag from 4  feet away at 30 Frames Per Second
         // Decimation = 3 ..  Detect 5" Tag from 10 feet away at 30 Frames Per Second
         // Note: Decimation can be changed on-the-fly to adapt during a match.
-        aprilTag.setDecimation(2);
+        aprilTagPhone.setDecimation(2);
+        aprilTagWebcam.setDecimation(2);
 
 //        VisionPortal portal = new VisionPortal.Builder()
 //                .addProcessor(colorLocatorPurple)
@@ -602,16 +646,16 @@ public class RobotAutonomous extends LinearOpMode {
     //Manually set the camera gain and exposure. This can only be called AFTER calling initAprilTag(), and only works for Webcams;
     private void    setManualExposure(int exposureMS, int gain) {
         // Wait for the camera to be open, then use the controls
-        if (visionPortal == null) {
+        if (visionPortalPhone == null) {
             return;
         }
 
 
         // Make sure camera is streaming before we try to set the exposure controls
-        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) {
+        if (visionPortalPhone.getCameraState() != VisionPortal.CameraState.STREAMING) {
             telemetry.addData("Camera", "Waiting");
             telemetry.update();
-            while (!isStopRequested() && (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING)) {
+            while (!isStopRequested() && (visionPortalPhone.getCameraState() != VisionPortal.CameraState.STREAMING)) {
                 sleep(20);
             }
             telemetry.addData("Camera", "Ready");
@@ -620,27 +664,27 @@ public class RobotAutonomous extends LinearOpMode {
 
 
         // Set camera controls unless we are stopping.
-        if (!isStopRequested())
-        {
-            ExposureControl exposureControl = visionPortal.getCameraControl(ExposureControl.class);
+        if (!isStopRequested()) {
+            ExposureControl exposureControl = visionPortalPhone.getCameraControl(ExposureControl.class);
             if (exposureControl.getMode() != ExposureControl.Mode.Manual) {
                 exposureControl.setMode(ExposureControl.Mode.Manual);
                 sleep(50);
             }
-            exposureControl.setExposure((long)exposureMS, TimeUnit.MILLISECONDS);
+            exposureControl.setExposure((long) exposureMS, TimeUnit.MILLISECONDS);
             sleep(20);
-            GainControl gainControl = visionPortal.getCameraControl(GainControl.class);
+            GainControl gainControl = visionPortalPhone.getCameraControl(GainControl.class);
             gainControl.setGain(gain);
             sleep(20);
             telemetry.addData("Camera", "Ready");
             telemetry.update();
+
         }
     }
 
 
     public List<int[]> findArtifacts() {
-        List<ColorBlobLocatorProcessor.Blob> blobsPurple = colorLocatorPurple.getBlobs();
-        List<ColorBlobLocatorProcessor.Blob> blobsGreen = colorLocatorGreen.getBlobs();
+        List<ColorBlobLocatorProcessor.Blob> blobsPurple = colorLocatorPurpleWebcam.getBlobs();
+        List<ColorBlobLocatorProcessor.Blob> blobsGreen = colorLocatorGreenWebcam.getBlobs();
         List<ColorBlobLocatorProcessor.Blob> blobs = new ArrayList<>();
         blobs.addAll(blobsPurple);
         blobs.addAll(blobsGreen);
@@ -684,19 +728,19 @@ public class RobotAutonomous extends LinearOpMode {
     private double[] getBallPosition(int xPixel, int yPixel, int rPixel) {
 
 
-        double distance = (ballRadius * averageFocalLengh) / rPixel;
+        double distance = (ballRadius * averageFocalLenghWebcam) / rPixel;
 
 
         //Horizontal angle
         //Use this when hte phone is sideways
-        //double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthX));
+        double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthXWebcam));
         //Vertical angle
         //Use this when the phone is the right way around
-        double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
+        //double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
         telemetry.addData("Distance", distance);
-        telemetry.addData("Angle", vAngle);
+        telemetry.addData("Angle", hAngle);
         telemetry.update();
-        double[] returnedData = {distance, vAngle};
+        double[] returnedData = {distance, hAngle};
         return returnedData;
 
 
