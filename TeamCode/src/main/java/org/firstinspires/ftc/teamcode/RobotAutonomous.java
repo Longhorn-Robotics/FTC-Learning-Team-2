@@ -300,16 +300,110 @@ public class RobotAutonomous extends LinearOpMode {
         }
 
 
-        collectBallRow();
+        searchForBall("CW");
+        collectBallRow(3.5);
         robot.moveRobot(-0.3, -0.3);
 
         if (rowNumber == 1) {
             sleep(1000);
         }
         robot.moveRobot(0, 0);
-        searchForAprilTag("CW");
+        searchForAprilTag("CCW");
         return;
     }
+
+    private void searchForBall(String direction) {
+        boolean foundBall = false;
+        while (! foundBall) {
+            robot.moveRobot(0.25, -0.25);
+            //Determine weather or not to spin clockwise or counterclockwise
+            if (direction.equals("CW")){
+                robot.moveRobot(0.25, -0.25);
+            }
+            else {
+                robot.moveRobot(-0.25, 0.25);
+            }
+            //Look for artifacts
+            List<int[]> currentDetections = findArtifacts();
+            if (currentDetections.size() > 0) {
+                //Get position of closest ball
+                int[] closestBall = currentDetections.get(0);
+                double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
+                //Check if we are facing the closest artifact (+- 20 degrees)
+                if (ballLocation[1] < 20 && ballLocation[1] > -20) {
+                    robot.moveRobot(0,0);
+                    foundBall = true;
+                }
+            }
+        }
+
+    }
+
+    private void collectBallRow (double time) {
+        String state;
+        ElapsedTime startTime = new ElapsedTime();
+        while (startTime.seconds() < 3.5) {
+            state = driveToClosestBallForXSMilliseconds(0, 10);
+            if (state.equals("No Balls!")) {
+                robot.moveRobot(MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            }
+        }
+        robot.moveRobot(0,0);
+    }
+
+
+    private String driveToClosestBall (double DESIRED_DISTANCE){
+        ElapsedTime startTime = new ElapsedTime();
+        while (true) {
+            // Step through the list of detected tags and look for a matching tag
+            List<int[]> currentDetections = findArtifacts();
+            if (currentDetections.size() < 1) {
+                telemetry.addData("Status", "Nothing detected");
+                telemetry.update();
+                sleep(1000000000);
+                return "No Balls!";
+            }
+            // Determine heading and range error so we can use them to control the robot automatically.penguin
+            int[] closestBall = currentDetections.get(0);
+            double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
+            double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
+            double headingError = ballLocation[1];
+            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
+            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
+
+            // Apply desired axes motions to the drivetrain.
+            moveRobot(drive, turn);
+            sleep(10);
+            //return "Driving";
+        }
+    }
+
+    private String driveToClosestBallForXSMilliseconds (double DESIRED_DISTANCE, double time){
+            // Step through the list of detected tags and look for a matching tag
+            List<int[]> currentDetections = findArtifacts();
+            if (currentDetections.size() < 1) {
+                return "No Balls!";
+            }
+            // Determine heading and range error so we can use them to control the robot automatically.penguin
+            int[] closestBall = currentDetections.get(0);
+            double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
+            double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
+            double headingError = ballLocation[1];
+            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
+            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
+
+            // Apply desired axes motions to the drivetrain.
+            moveRobot(drive, turn);
+            sleep(time);
+            return "Driving";
+    }
+
+
+
 
 
     private void searchForAprilTag(String direction) {
@@ -351,36 +445,7 @@ public class RobotAutonomous extends LinearOpMode {
     }
 
 
-    private void collectBallRow () {
 
-        //rotate and look for the ball row
-        boolean foundBall = false;
-        while (! foundBall) {
-            robot.moveRobot(0.25, -0.25);
-            List<int[]> currentDetections = findArtifacts();
-            if (currentDetections.size() > 0) {
-                int[] closestBall = currentDetections.get(0);
-                double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
-                if (ballLocation[1] < 20 && ballLocation[1] > -20) {
-                    robot.moveRobot(0,0);
-                    foundBall = true;
-                }
-            }
-        }
-        String state;
-        ElapsedTime startTime = new ElapsedTime();
-        while (startTime.seconds() < 3.5) {
-            state = driveToClosestBall(0);
-            if (state.equals("No Balls!")) {
-                robot.moveRobot(MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            }
-        }
-        robot.moveRobot(0,0);
-//        if (state.equals("No Ball!")) {
-//            robot.moveRobot(0,0);
-//            return;
-//        }
-    }
 
 
     private void driveToAprilTag (double DESIRED_DISTANCE){
@@ -603,62 +668,10 @@ public class RobotAutonomous extends LinearOpMode {
     }
 
 
-    private String driveToClosestBall (double DESIRED_DISTANCE){
-        ElapsedTime startTime = new ElapsedTime();
-        while (true) {
-            // Step through the list of detected tags and look for a matching tag
-            List<int[]> currentDetections = findArtifacts();
-            if (currentDetections.size() < 1) {
-                telemetry.addData("Status", "Nothing detected");
-                telemetry.update();
-                sleep(1000000000);
-                return "No Balls!";
-            }
-            // Determine heading and range error so we can use them to control the robot automatically.penguin
-                int[] closestBall = currentDetections.get(0);
-                double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
-                double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
-                double headingError = ballLocation[1];
-                // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
-                drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-                turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
 
 
-                // Apply desired axes motions to the drivetrain.
-                moveRobot(drive, turn);
-                sleep(10);
-                //return "Driving";
-            }
-    }
 
 
-    private String driveToClosestBallForXSeconds (double DESIRED_DISTANCE, double time){
-        ElapsedTime startTime = new ElapsedTime();
-        while (true) {
-            // Step through the list of detected tags and look for a matching tag
-            List<int[]> currentDetections = findArtifacts();
-            if (currentDetections.size() < 1) {
-                telemetry.addData("Status", "Nothing detected");
-                telemetry.update();
-                sleep(1000000000);
-                return "No Balls!";
-            }
-            // Determine heading and range error so we can use them to control the robot automatically.penguin
-            int[] closestBall = currentDetections.get(0);
-            double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
-            double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
-            double headingError = ballLocation[1];
-            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
-            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
-            turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
-
-
-            // Apply desired axes motions to the drivetrain.
-            moveRobot(drive, turn);
-            sleep(10);
-            //return "Driving";
-        }
-    }
 
 
 
