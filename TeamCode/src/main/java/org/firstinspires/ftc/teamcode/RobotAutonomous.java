@@ -380,7 +380,7 @@ public class RobotAutonomous extends LinearOpMode {
         }
     }
 
-    private String driveToClosestBallForXSMilliseconds (double DESIRED_DISTANCE, double time){
+    private String driveToClosestBallForXSMilliseconds (double DESIRED_DISTANCE, long time, double angle){
             // Step through the list of detected tags and look for a matching tag
             List<int[]> currentDetections = findArtifacts();
             if (currentDetections.size() < 1) {
@@ -390,7 +390,12 @@ public class RobotAutonomous extends LinearOpMode {
             int[] closestBall = currentDetections.get(0);
             double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
             double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
+
             double headingError = ballLocation[1];
+            //TEMPORARY: Make sure the camera does not pick up noise during it's scanning process
+            if (headingError > 30 || headingError < -30) {
+                return "No Balls!";
+            }
             // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
             drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
