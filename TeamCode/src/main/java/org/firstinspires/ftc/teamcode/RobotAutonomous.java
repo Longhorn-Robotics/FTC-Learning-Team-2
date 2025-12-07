@@ -353,7 +353,7 @@ public class RobotAutonomous extends LinearOpMode {
 
     private void collectBallRow () {
 
-
+        //rotate and look for the ball row
         boolean foundBall = false;
         while (! foundBall) {
             robot.moveRobot(0.25, -0.25);
@@ -371,6 +371,9 @@ public class RobotAutonomous extends LinearOpMode {
         ElapsedTime startTime = new ElapsedTime();
         while (startTime.seconds() < 3.5) {
             state = driveToClosestBall(0);
+            if (state.equals("No Balls!")) {
+                robot.moveRobot(MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            }
         }
         robot.moveRobot(0,0);
 //        if (state.equals("No Ball!")) {
@@ -626,6 +629,35 @@ public class RobotAutonomous extends LinearOpMode {
                 sleep(10);
                 //return "Driving";
             }
+    }
+
+
+    private String driveToClosestBallForXSeconds (double DESIRED_DISTANCE, double time){
+        ElapsedTime startTime = new ElapsedTime();
+        while (true) {
+            // Step through the list of detected tags and look for a matching tag
+            List<int[]> currentDetections = findArtifacts();
+            if (currentDetections.size() < 1) {
+                telemetry.addData("Status", "Nothing detected");
+                telemetry.update();
+                sleep(1000000000);
+                return "No Balls!";
+            }
+            // Determine heading and range error so we can use them to control the robot automatically.penguin
+            int[] closestBall = currentDetections.get(0);
+            double[] ballLocation = getBallPosition(closestBall[0], closestBall[1], closestBall[2]);
+            double rangeError = (ballLocation[0] - DESIRED_DISTANCE);
+            double headingError = ballLocation[1];
+            // Use the speed and turn "gains" to calculate how we want the robot to move.  Clip it to the maximum
+            drive = Range.clip(rangeError * SPEED_GAIN, -MAX_AUTO_SPEED, MAX_AUTO_SPEED);
+            turn = Range.clip(headingError * TURN_GAIN, -MAX_AUTO_TURN, MAX_AUTO_TURN);
+
+
+            // Apply desired axes motions to the drivetrain.
+            moveRobot(drive, turn);
+            sleep(10);
+            //return "Driving";
+        }
     }
 
 
