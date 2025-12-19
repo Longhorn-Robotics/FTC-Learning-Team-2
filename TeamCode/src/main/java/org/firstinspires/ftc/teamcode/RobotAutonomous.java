@@ -280,7 +280,7 @@ public class RobotAutonomous extends LinearOpMode {
         telemetry.update();
         waitForStart();
         maxverstappan.start();
-        robot.runIntake();
+        robot.runIntake(0.1);
 
 
 //        visionPortal.setProcessorEnabled(aprilTag, true);
@@ -343,7 +343,7 @@ public class RobotAutonomous extends LinearOpMode {
         String state;
         ElapsedTime startTime = new ElapsedTime();
         while (startTime.seconds() < 3.5) {
-            state = driveToClosestBallForXSMilliseconds(0, 10, 30);
+            state = driveToClosestBallForXSMilliseconds(0, 10, 3);
             if (state.equals("No Balls!")) {
                 robot.moveRobot(MAX_AUTO_SPEED, MAX_AUTO_SPEED);
             }

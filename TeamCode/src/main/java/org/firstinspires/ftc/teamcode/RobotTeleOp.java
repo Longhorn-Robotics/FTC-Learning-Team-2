@@ -66,8 +66,8 @@ public class RobotTeleOp extends OpMode{
 
 
     //Define variables for reading the game controller
-    double LStickY = 0;
-    double RStickY = 0;
+    double LStickY;
+    double RStickY;
     boolean RBumper = false;
     boolean LBumper = false;
 
@@ -86,14 +86,15 @@ public class RobotTeleOp extends OpMode{
         }
 
         //run commands on on the robot
-        if (RBumper) {
-            robot.idleLauncher();
+        if (!RBumper) {
+            robot.idleLauncher(0);
         }
         else {
-            robot.launchItems(1);
+            robot.launchItems(0.65);
+            robot.runIntake(0.15);
         }
         robot.moveRobot(LStickY, RStickY);
-        robot.runIntake();
+        robot.runIntake(0.2);
 
 
         //record telemetry data
@@ -107,7 +108,7 @@ public class RobotTeleOp extends OpMode{
     }
 
     @Override
-    public void stop () {
+    public void stop() {
 
     }
 

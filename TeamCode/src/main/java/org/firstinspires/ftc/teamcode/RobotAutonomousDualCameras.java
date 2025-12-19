@@ -323,7 +323,7 @@ public class RobotAutonomousDualCameras extends LinearOpMode {
         telemetry.update();
         waitForStart();
         maxverstappan.start();
-        robot.runIntake();
+        robot.runIntake(0.1);
 
 
 //        visionPortal.setProcessorEnabled(aprilTag, true);

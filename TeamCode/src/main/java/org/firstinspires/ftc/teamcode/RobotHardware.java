@@ -29,21 +29,23 @@ public class RobotHardware {
     HardwareMap localHardwareMap;
     //init our hardware
     public void init(HardwareMap localHardwareMap) {
-        LDriveMotor = localHardwareMap.get(DcMotor.class, "motora");
-        RDriveMotor = localHardwareMap.get(DcMotor.class, "motorb");
-        //LaunchMotor = localHardwareMap.get(DcMotor.class, "LaunchMotor");
-        IntakeMotor = localHardwareMap.get(DcMotor.class, "motorc");
+        LDriveMotor = localHardwareMap.get(DcMotor.class, "ld");
+        RDriveMotor = localHardwareMap.get(DcMotor.class, "rd");
+        LaunchMotor = localHardwareMap.get(DcMotor.class, "ou");
+        IntakeMotor = localHardwareMap.get(DcMotor.class, "in");
         //ReleaseFlap = localHardwareMap.get(Servo.class, "ReleaseFlap");
 
     }
 
     public void AutoInit (HardwareMap localHardwareMap) {
-        LDriveMotor = localHardwareMap.get(DcMotor.class, "motorb");
-        RDriveMotor = localHardwareMap.get(DcMotor.class, "motora");
-        IntakeMotor = localHardwareMap.get(DcMotor.class, "motorc");
+        LDriveMotor = localHardwareMap.get(DcMotor.class, "ld");
+        RDriveMotor = localHardwareMap.get(DcMotor.class, "rd");
+        IntakeMotor = localHardwareMap.get(DcMotor.class, "in");
+        LaunchMotor = localHardwareMap.get(DcMotor.class, "ou");
         LDriveMotor.setDirection(DcMotor.Direction.REVERSE);
         RDriveMotor.setDirection(DcMotor.Direction.FORWARD);
         IntakeMotor.setDirection(DcMotor.Direction.REVERSE);
+        LaunchMotor.setDirection(DcMotor.Direction.FORWARD);
     }
     //move the robot
     public void moveRobot(double LPower, double RPower){
@@ -51,21 +53,21 @@ public class RobotHardware {
         RDriveMotor.setPower(RPower);
     }
     //Run the intake
-    public void runIntake() {
-        IntakeMotor.setPower(1000000000);
+    public void runIntake(double speed) {
+        IntakeMotor.setPower(speed);
     }
     //set the launcher to a slower speed while we aren't using it, but we don't stop it so it can get back up to speed quickly
     //close the flap to stop balls from rolling into the launcher
-    public void idleLauncher() {
-        ReleaseFlap.setPosition(0);
-        LaunchMotor.setPower(0.5);
+    public void idleLauncher(double speed) {
+        //eleaseFlap.setPosition(0);
+        LaunchMotor.setPower(speed * -1);
     }
     //Start the launcher at the given speed
     //Open the flap to allow balls to enter the launcher
     //add angle later by changing the speed of the two wheels to change to angle the ball is launched
     public void launchItems(double speed) {
-        LaunchMotor.setPower(speed);
-        ReleaseFlap.setPosition(90);
+        LaunchMotor.setPower(speed * -1);
+        //ReleaseFlap.setPosition(90);
     }
 }
 
