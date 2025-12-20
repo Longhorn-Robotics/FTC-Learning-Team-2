@@ -1,10 +1,13 @@
 //import libraries
 package org.firstinspires.ftc.teamcode;
+import static java.lang.Thread.sleep;
+
 import android.media.MediaPlayer;
 import android.util.Size;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -25,6 +28,7 @@ import java.util.List;
 
 
 public class RobotTeleOp extends OpMode{
+    private int stall;
     //Get functions to move the robot
     RobotHardware robot = new RobotHardware();
 
@@ -90,11 +94,20 @@ public class RobotTeleOp extends OpMode{
             robot.idleLauncher(0);
         }
         else {
-            robot.launchItems(0.65);
-            robot.runIntake(0.15);
+            robot.launchItems(1);
+//            robot.runIntake(0);
+//            ElapsedTime intakeWaitTime = new ElapsedTime();
+//            while (intakeWaitTime.seconds() < 2.5) {
+//                stall = 0;
+//            }
+//            robot.runIntake(1);
+//            intakeWaitTime.reset();
+//            while (intakeWaitTime.seconds() < 2.5) {
+//                stall = 0;
+//            }
         }
         robot.moveRobot(LStickY, RStickY);
-        robot.runIntake(0.2);
+        robot.runIntake(1);
 
 
         //record telemetry data
