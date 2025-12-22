@@ -60,10 +60,10 @@ public class RobotTeleOp extends OpMode{
     @Override
     public void init() {
 
-        maxverstappan = MediaPlayer.create(hardwareMap.appContext, R.raw.maxverstappan);
-        maxverstappan.setLooping(false);
+//        maxverstappan = MediaPlayer.create(hardwareMap.appContext, R.raw.maxverstappan);
+//        maxverstappan.setLooping(false);
         robot.init(hardwareMap);
-        maxverstappan.start();
+        //maxverstappan.start();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
     }
