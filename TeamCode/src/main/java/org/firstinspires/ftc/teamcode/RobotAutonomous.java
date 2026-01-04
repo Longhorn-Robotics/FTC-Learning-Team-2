@@ -492,7 +492,7 @@ public class RobotAutonomous extends LinearOpMode {
                 // Determine heading and range error so we can use them to control the robot automatically.
                 rangeError   = (desiredTag.ftcPose.range - DESIRED_DISTANCE);
                 //When the phone is sideways
-//                headingError = desiredTag.ftcPose.bearing;
+//              headingError = desiredTag.ftcPose.bearing;
                 //When the phone is the right way around
                 headingError = desiredTag.ftcPose.elevation;
                 telemetry.addData("Distance", rangeError);
@@ -689,10 +689,10 @@ public class RobotAutonomous extends LinearOpMode {
 
         //Horizontal angle
         //Use this when hte phone is sideways
-        //double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthX));
+        double hAngle = Math.toDegrees(Math.atan((xPixel - cameraCenterX) / focalLengthX));
         //Vertical angle
         //Use this when the phone is the right way around
-        double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
+        //double vAngle =  Math.toDegrees(Math.atan((yPixel - cameraCenterY) / focalLengthY));
         telemetry.addData("Distance", distance);
         telemetry.addData("Angle", vAngle);
         telemetry.update();
