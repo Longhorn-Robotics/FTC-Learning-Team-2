@@ -1,22 +1,17 @@
 //import libraries
 package org.firstinspires.ftc.teamcode;
+
 import android.graphics.Color;
-import android.hardware.camera2.CameraCharacteristics;
+import android.media.MediaPlayer;
 import android.util.Size;
 
-
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.SortOrder;
 
-
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -26,29 +21,19 @@ import org.firstinspires.ftc.vision.opencv.Circle;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
 import org.firstinspires.ftc.vision.opencv.ImageRegion;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
-import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.lang.Math;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
-//MIGHT NEED TO REMOVE FOR COMP!!!!!
-import android.media.MediaPlayer;
 //Declare teleop
-@Autonomous(name = "Auto Control", group  = "Robot")
+@Autonomous(name = "Auto Control 2.0", group  = "Robot")
 
 
 
 
 //init and run our teleop
-public class RobotAutonomous extends LinearOpMode {
+public class RobotAutonomous2 extends LinearOpMode {
 
     //MIGHT NEED TO REMOVE FOR COMP!!!
     MediaPlayer mediaPlayer;
@@ -258,8 +243,8 @@ public class RobotAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() {
         //init hardware
-        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
-        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
+        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
+        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
 //        visionPortal.setProcessorEnabled(aprilTag, false);
         robot.init(hardwareMap);
         initAprilTag();
@@ -279,17 +264,17 @@ public class RobotAutonomous extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
         waitForStart();
-        //maxverstappan.start();
+        maxverstappan.start();
         robot.runIntake(0.1);
 
 
 //        visionPortal.setProcessorEnabled(aprilTag, true);
         driveToAprilTag(12);
-//        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
-//        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
+        visionPortal.setProcessorEnabled(colorLocatorPurple, true);
+        visionPortal.setProcessorEnabled(colorLocatorGreen, true);
         navigateAndCollectBallRow(1);
-//        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
-//        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
+        visionPortal.setProcessorEnabled(colorLocatorPurple, false);
+        visionPortal.setProcessorEnabled(colorLocatorGreen, false);
         driveToAprilTag(12);
     }
 
