@@ -83,6 +83,7 @@ public class RobotAutonomous extends LinearOpMode {
 
     //  Set the GAIN constants to controlxx the relationship between the measured position error, and how much power is
     //  applied to the drive motors to correct the error.
+    //  applied to the drive motors to correct the error.
     //  Drive = Error * Gain    Make these values smaller for smoother control, or larger for a more aggressive response.
     //speed gain was 0.02
     final double SPEED_GAIN =   0.02 ;   //  Speed Control "Gain". e.g. Ramp up to 50% power at a 25 inch error.   (0.50 / 25.0)
