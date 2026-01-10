@@ -23,7 +23,8 @@ public class RobotAutonomous2 extends LinearOpMode {
     //==============================================================================================
 
     // === CAMERA & APRIL TAG ===
-    private static final int HOOP_APRILTAG_ID = 5;
+    //private static final int HOOP_APRILTAG_ID = 5;
+    private static final int HOOP_APRILTAG_ID = -1;
     final double DISTANCE_TO_SCORE = 12.0; // Inches
     final double TARGET_YAW_DEGREES = -45.0;
 
@@ -129,6 +130,8 @@ public class RobotAutonomous2 extends LinearOpMode {
         AprilTagDetection desiredTag = getDesiredAprilTag();
         if (desiredTag == null) {
             robot.moveRobot(0, MAX_AUTO_TURN * 0.5); // Turn right to find tag
+            telemetry.addLine("No AprilTag detected.");
+            telemetry.update();
             return false;
         }
 
@@ -211,7 +214,7 @@ public class RobotAutonomous2 extends LinearOpMode {
     private AprilTagDetection getDesiredAprilTag() {
         List<AprilTagDetection> currentDetections = aprilTag.getDetections();
         for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null && detection.id == HOOP_APRILTAG_ID) {
+            if (detection.metadata != null && detection.id == HOOP_APRILTAG_ID || HOOP_APRILTAG_ID < 0) {
                 return detection;
             }
         }

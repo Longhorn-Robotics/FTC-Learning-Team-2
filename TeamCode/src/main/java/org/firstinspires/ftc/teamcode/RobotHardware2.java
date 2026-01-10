@@ -17,9 +17,9 @@ public class RobotHardware2 {
     private Servo ReleaseFlap;
 
     // Constants for encoder calculations
-    static final double COUNTS_PER_MOTOR_REV = 537.7; // REV HD Hex Motor
-    static final double WHEEL_DIAMETER_INCHES = 4.0;   // For calculating circumference
-    static final double ROBOT_TRACK_WIDTH_INCHES = 16.0; // Distance between the centers of the wheels
+    static final double COUNTS_PER_MOTOR_REV = 537.6; // goBILDA 5203 Series (19.2:1 Ratio)
+    static final double WHEEL_DIAMETER_INCHES = 3.78;   // For 96mm Rhino Wheels
+    static final double ROBOT_TRACK_WIDTH_INCHES = 6.89; // For 17.5cm track width
     public static final double COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV) / (WHEEL_DIAMETER_INCHES * 3.1415);
     public static final double COUNTS_PER_DEGREE_TURN = (COUNTS_PER_MOTOR_REV * ROBOT_TRACK_WIDTH_INCHES * 3.1415) / (360 * WHEEL_DIAMETER_INCHES * 3.1415);
 
