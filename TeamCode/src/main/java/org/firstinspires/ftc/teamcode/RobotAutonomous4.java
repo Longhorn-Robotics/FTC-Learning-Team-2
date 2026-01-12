@@ -387,7 +387,7 @@ public class RobotAutonomous4 extends LinearOpMode {
         List<int[]> results = new ArrayList<>();
         for (ColorBlobLocatorProcessor.Blob blob : blobs) {
             Circle c = blob.getCircle();
-            results.add(new int[]{(int)c.center.x, (int)c.center.y, (int)c.radius});
+            results.add(new int[]{(int)c.getX(), (int)c.getY(), (int)c.getRadius()});
         }
         return results;
     }
