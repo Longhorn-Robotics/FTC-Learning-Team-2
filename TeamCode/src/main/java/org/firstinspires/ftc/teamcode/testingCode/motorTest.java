@@ -35,7 +35,7 @@ public class motorTest extends OpMode{
 
 
         //run commands on on the robot
-        robot.moveRobot( 100000000, 10000000);
+        robot.moveRobot( 100000000, 10000000, -100000000);
 
 
         //record telemetry data
