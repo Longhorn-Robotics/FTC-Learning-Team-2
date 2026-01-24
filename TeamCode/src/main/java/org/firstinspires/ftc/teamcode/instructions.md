@@ -18,4 +18,5 @@ Note: When I say it goes left, rught, up, or down, that means from a top down pe
 5. Once the robot collects the ball row, it wil reverse until it is at the pont where it originally tuned CW to pick up the balls. The robot will turn CCW and use the AprilTag as an ahcor to return to the launch zone.
 6. The robot will turn CW until it is facing the AprilTag
 
-For Steps 3 and 5, and 6, it is very likely the ball will lose sigt of the AprilTag. When this happens, the robot must remember it's lcation/heading/distacne or whatever so it cna drive purely on the IMU and encoders UNTIL it sees the AprilTag again.
+IMPORTANT:
+For Steps 3 and 5, and 6, it is very likely the robot will lose sigt of the AprilTag. When this happens, the robot must remember it's lcation/heading/distacne or whatever so it can drive purely on the IMU and encoders UNTIL it sees the AprilTag again.

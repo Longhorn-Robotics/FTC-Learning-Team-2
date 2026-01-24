@@ -1,18 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.graphics.Color;
 import android.util.Size;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.SortOrder;
 
-import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -26,11 +22,10 @@ import org.firstinspires.ftc.vision.opencv.ImageRegion;
 import java.util.ArrayList;
 import java.util.List;
 
-@Autonomous(name = "Robot Auto 4 - Instructions", group = "Robot")
+@Autonomous(name = "Robot Auto 4 - Final", group = "Robot")
 public class RobotAutonomous4 extends LinearOpMode {
 
     // --- HARDWARE ---
-    // We must use RobotHardware as per instructions
     private RobotHardware robot = new RobotHardware();
     private IMU imu;
     private DcMotor leftEncoder, rightEncoder;
@@ -41,17 +36,25 @@ public class RobotAutonomous4 extends LinearOpMode {
     private ColorBlobLocatorProcessor colorLocatorPurple;
     private ColorBlobLocatorProcessor colorLocatorGreen;
 
-    // --- CONSTANTS ---
-    // Calibrated from RobotAutonomous3
-    private static final double COUNTS_PER_INCH = 45.28;
+    // --- TUNING CONSTANTS ---
+    private static final double COUNTS_PER_INCH = 45.28; 
     private static final double MAX_SPEED = 0.5;
-    private static final double MAX_TURN = 0.3;
-    private static final double SPEED_GAIN = 0.03;
+    private static final double MAX_TURN = 0.4;
+    private static final double SPEED_GAIN = 0.04;
     private static final double TURN_GAIN = 0.02;
     private static final double HEADING_THRESHOLD = 2.0; // Degrees
     private static final double DISTANCE_THRESHOLD = 1.0; // Inches
+    
+    // --- FIELD GEOMETRY ---
+    // Distance from the AprilTag (diagonal) to reach the "Lane" start point.
+    // This is the point where the robot is aligned with the column of ball rows.
+    private static final double LANE_ALIGNMENT_DISTANCE = 36.0; 
+    
+    // Y-Distances to reverse down the lane for each row. 
+    // 0 is the "Lane Start" (aligned with tag). Positive values mean further down the field.
+    private double[] rowDepths = {12.0, 36.0, 60.0, 84.0}; 
 
-    // Camera Intrinsics (Logitech C270 - from RobotAutonomous)
+    // Camera Intrinsics (Logitech C270)
     private static final double FX = 357.1;
     private static final double FY = 357.1;
     private static final double CX = 159.5;
@@ -60,22 +63,24 @@ public class RobotAutonomous4 extends LinearOpMode {
     // --- STATE MACHINE ---
     private enum State {
         INIT,
-        ALIGN_TO_TAG_START,
-        POSITION_FOR_ROW_START,
-        TURN_UP_AND_REVERSE,
-        TURN_CW_TO_BALLS,
-        COLLECT_BALLS,
-        REVERSE_FROM_BALLS,
-        TURN_CCW_AND_RETURN,
-        FACE_TAG_FINISH,
+        ALIGN_TO_TAG_START,    // Face the tag initially
+        DRIVE_TO_LANE,         // Move away from tag to reach the alignment lane
+        TURN_UP,               // Turn to 0 degrees (Up)
+        DRIVE_TO_ROW,          // Reverse down the lane to the specific row
+        TURN_TO_BALLS,         // Turn CW (-90) to face balls
+        COLLECT_BALLS,         // Drive forward and intake
+        REVERSE_FROM_BALLS,    // Reverse back to the lane
+        TURN_UP_RETURN,        // Turn back to 0 degrees
+        RETURN_TO_LANE_START,  // Drive forward (Up) to the start of the lane
+        TURN_TO_TAG,           // Turn to face the tag (-45)
+        DRIVE_TO_SCORE,        // Drive closer to tag for scoring
+        SCORE,                 // Launch balls
         DONE
     }
 
     private State currentState = State.INIT;
     private int currentRow = 0;
-    // Distances to reverse down the court for each row (approximate, tune as needed)
-    private double[] rowDistances = {24.0, 36.0, 48.0, 60.0};
-    private double currentTargetRowDistance = 0;
+    private double currentLaneDepth = 0; // Target depth for current row
 
     // --- LOCALIZATION MEMORY ---
     private boolean tagVisible = false;
@@ -88,10 +93,11 @@ public class RobotAutonomous4 extends LinearOpMode {
         // 1. Initialize Hardware
         robot.AutoInit(hardwareMap);
 
-        // Access encoders directly via HardwareMap since RobotHardware doesn't expose them publicly
-        // This allows us to use encoders while still using the RobotHardware class for movement
+        // Access encoders matching RobotHardware direction
         leftEncoder = hardwareMap.get(DcMotor.class, "ld");
         rightEncoder = hardwareMap.get(DcMotor.class, "rd");
+        leftEncoder.setDirection(DcMotor.Direction.REVERSE);
+        rightEncoder.setDirection(DcMotor.Direction.FORWARD);
         leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -118,44 +124,51 @@ public class RobotAutonomous4 extends LinearOpMode {
 
         while (opModeIsActive()) {
             updateLocalization();
+            
+            // --- TELEMETRY ---
             telemetry.addData("State", currentState);
             telemetry.addData("Row", currentRow + 1);
-            telemetry.addData("Tag Visible", tagVisible);
-            telemetry.addData("Heading", "%.2f", getHeading());
+            telemetry.addData("Tag Visible", tagVisible ? "YES" : "NO");
+            telemetry.addData("Tag Range", "%.1f", lastTagRange);
+            telemetry.addData("Heading", "%.1f", getHeading());
+            telemetry.addData("Enc Dist", "%.1f", getRelativeEncoderDistance());
 
             switch (currentState) {
                 case ALIGN_TO_TAG_START:
-                    // Step 1: Align with AprilTag
-                    // Target 12 inches from tag to start
-                    if (alignToTag(12.0)) {
-                        currentState = State.POSITION_FOR_ROW_START;
+                    // Step 1: Face the AprilTag (approx -45 deg for Top-Right corner)
+                    if (turnToHeading(-45)) {
+                        currentState = State.DRIVE_TO_LANE;
                     }
                     break;
 
-                case POSITION_FOR_ROW_START:
-                    // Step 2: Prepare for the run.
-                    // We are aligned to the tag. Now we set up variables for the specific row.
-                    currentTargetRowDistance = rowDistances[currentRow];
-                    resetRelativeEncoder();
-                    currentState = State.TURN_UP_AND_REVERSE;
+                case DRIVE_TO_LANE:
+                    // Step 2: Drive backwards/forwards to reach the "Lane"
+                    // Target is LANE_ALIGNMENT_DISTANCE from tag
+                    if (driveToTagDistance(LANE_ALIGNMENT_DISTANCE)) {
+                        currentState = State.TURN_UP;
+                    }
                     break;
 
-                case TURN_UP_AND_REVERSE:
-                    // Step 3: Turn facing upwards (0 deg) and reverse to ball row
-                    // "Upwards" = 0 degrees. "Reverse" = moving negative relative to robot front.
-                    // We use the AprilTag as an anchor implicitly by starting from it.
-                    // If we lose the tag, driveStraight uses IMU/Encoders.
+                case TURN_UP:
+                    // Step 3: Turn to face Up (0 deg)
                     if (turnToHeading(0)) {
-                        // Drive backwards X inches
-                        if (driveStraight(-currentTargetRowDistance, 0)) {
-                            currentState = State.TURN_CW_TO_BALLS;
-                        }
+                        resetRelativeEncoder();
+                        currentLaneDepth = rowDepths[currentRow];
+                        currentState = State.DRIVE_TO_ROW;
                     }
                     break;
 
-                case TURN_CW_TO_BALLS:
-                    // Step 4: Turn CW until facing ball row.
-                    // Facing -90 degrees (Right).
+                case DRIVE_TO_ROW:
+                    // Step 3 Cont: Reverse down the lane (Blind using Encoders/IMU)
+                    // Move negative distance (Reverse)
+                    if (driveStraight(-currentLaneDepth, 0)) {
+                        currentState = State.TURN_TO_BALLS;
+                    }
+                    break;
+
+                case TURN_TO_BALLS:
+                    // Step 4: Turn CW to face balls.
+                    // If Up is 0, Right is -90. Robot is left of balls, so turn Right.
                     if (turnToHeading(-90)) {
                         resetRelativeEncoder();
                         currentState = State.COLLECT_BALLS;
@@ -163,51 +176,69 @@ public class RobotAutonomous4 extends LinearOpMode {
                     break;
 
                 case COLLECT_BALLS:
-                    // Step 4 Cont: Drive forward to pick up balls.
-                    // Use Camera for precision, IMU/Encoders for rough direction.
-                    robot.runIntake(1.0); // Turn on intake
-                    
-                    // Drive 24 inches into the row (or until balls collected)
+                    // Step 4 Cont: Drive forward, intake on
+                    robot.runIntake(1.0);
+                    // Drive 24 inches or until collected
                     if (driveAndCollect(24.0, -90)) {
-                        robot.runIntake(0); // Turn off intake
+                        robot.runIntake(0);
                         resetRelativeEncoder();
                         currentState = State.REVERSE_FROM_BALLS;
                     }
                     break;
 
                 case REVERSE_FROM_BALLS:
-                    // Step 5: Reverse to original point (where we turned)
+                    // Step 5: Reverse back to the lane point
                     if (driveStraight(-24.0, -90)) {
-                        currentState = State.TURN_CCW_AND_RETURN;
+                        currentState = State.TURN_UP_RETURN;
                     }
                     break;
 
-                case TURN_CCW_AND_RETURN:
-                    // Step 5 Cont: Turn CCW (back to 0) and return to launch zone
+                case TURN_UP_RETURN:
+                    // Step 5 Cont: Turn CCW back to Up (0 deg)
                     if (turnToHeading(0)) {
-                        // Return to the AprilTag anchor point (approx 12 inches from tag)
-                        // This handles "Lost Tag" by driving blindly if needed until tag is seen
-                        if (returnToTag(12.0)) {
-                            currentState = State.FACE_TAG_FINISH;
-                        }
+                        resetRelativeEncoder();
+                        currentState = State.RETURN_TO_LANE_START;
                     }
                     break;
 
-                case FACE_TAG_FINISH:
-                    // Step 6: Turn CW until facing AprilTag
-                    // Align to it for shooting.
-                    if (alignToTag(12.0)) {
-                        // TODO: Add launcher code here
-                        // robot.launchItems(1.0);
-                        // sleep(1000);
-                        // robot.idleLauncher(0);
-                        
-                        currentRow++;
-                        if (currentRow >= rowDistances.length) {
-                            currentState = State.DONE;
-                        } else {
-                            currentState = State.POSITION_FOR_ROW_START;
-                        }
+                case RETURN_TO_LANE_START:
+                    // Step 5 Cont: Return to the start of the lane (Tag Anchor)
+                    // We moved -currentLaneDepth down, so move +currentLaneDepth up
+                    if (driveStraight(currentLaneDepth, 0)) {
+                        currentState = State.TURN_TO_TAG;
+                    }
+                    break;
+
+                case TURN_TO_TAG:
+                    // Step 6: Turn CW to face Tag (-45)
+                    if (turnToHeading(-45)) {
+                        currentState = State.DRIVE_TO_SCORE;
+                    }
+                    break;
+                    
+                case DRIVE_TO_SCORE:
+                    // Drive closer to tag (e.g. 12 inches) to score
+                    if (driveToTagDistance(12.0)) {
+                         currentState = State.SCORE;
+                    }
+                    break;
+
+                case SCORE:
+                    // Launch Code Placeholder
+                    robot.moveRobot(0,0);
+                    telemetry.addData("Action", "LAUNCHING!");
+                    telemetry.update();
+                    
+                    // robot.launchItems(1.0);
+                    // sleep(1000);
+                    // robot.idleLauncher(0);
+
+                    currentRow++;
+                    if (currentRow >= rowDepths.length) {
+                        currentState = State.DONE;
+                    } else {
+                        // Go back out to lane alignment for next row
+                        currentState = State.DRIVE_TO_LANE; 
                     }
                     break;
 
@@ -221,54 +252,39 @@ public class RobotAutonomous4 extends LinearOpMode {
 
     // --- NAVIGATION METHODS ---
 
-    private boolean alignToTag(double targetDistance) {
-        double rangeError = 0;
-        double headingError = 0;
-
-        if (tagVisible) {
-            rangeError = lastTagRange - targetDistance;
-            // Turn to face tag center.
-            // Note: Tag is at 45 deg on wall. If we face it directly, bearing is 0.
-            headingError = lastTagBearing; 
-        } else {
-            // If tag lost, stop. We need to see it to align.
-            robot.moveRobot(0, 0);
-            return false;
-        }
-
-        double drive = Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
-        double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
-
-        robot.moveRobot(drive - turn, drive + turn);
-
-        return (Math.abs(rangeError) < DISTANCE_THRESHOLD && Math.abs(headingError) < HEADING_THRESHOLD);
-    }
-
-    private boolean returnToTag(double targetDistance) {
-        // Handles the "Lost Tag" scenario by driving blindly towards where we think it is (Forward)
+    private boolean driveToTagDistance(double targetDistance) {
+        // Moves robot along its current heading to reach specific distance from tag
+        // Handles "Go backwards/forwards" logic
+        
         double rangeError;
         double headingError;
 
         if (tagVisible) {
             rangeError = lastTagRange - targetDistance;
-            headingError = lastTagBearing;
+            // Face the tag directly
+            headingError = lastTagBearing; 
         } else {
-            // Dead reckoning: We assume we are facing 0 (Up) and need to drive forward
-            // We set a fake range error to encourage forward movement
-            rangeError = 10.0; 
-            headingError = 0 - getHeading(); // Maintain 0 heading
+            // Lost tag? Stop and search? 
+            // Or assume we are close and just rely on last known?
+            // For safety, stop if lost during this critical alignment.
+            robot.moveRobot(0, 0);
+            return false;
+        }
+
+        if (Math.abs(rangeError) < DISTANCE_THRESHOLD) {
+            robot.moveRobot(0, 0);
+            return true;
         }
 
         double drive = Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
         double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
 
         robot.moveRobot(drive - turn, drive + turn);
-
-        // Only return true if we actually see the tag AND are close enough
-        return (tagVisible && Math.abs(lastTagRange - targetDistance) < DISTANCE_THRESHOLD);
+        return false;
     }
 
     private boolean driveStraight(double inches, double targetHeading) {
+        // Blind driving using Encoders + IMU
         double currentDist = getRelativeEncoderDistance();
         double distError = inches - currentDist;
         double headingError = targetHeading - getHeading();
@@ -288,6 +304,10 @@ public class RobotAutonomous4 extends LinearOpMode {
     private boolean turnToHeading(double targetHeading) {
         double headingError = targetHeading - getHeading();
 
+        // Normalize error to -180 to 180
+        while (headingError > 180) headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
         if (Math.abs(headingError) < HEADING_THRESHOLD) {
             robot.moveRobot(0, 0);
             return true;
@@ -299,20 +319,21 @@ public class RobotAutonomous4 extends LinearOpMode {
     }
 
     private boolean driveAndCollect(double targetInches, double targetHeading) {
-        // Use ColorBlob for precision steering
+        // Use ColorBlob for precision steering towards balls
         double turnCorrection = 0;
         List<int[]> artifacts = findArtifacts();
         
         if (!artifacts.isEmpty()) {
             // Found a ball, steer towards it
             int[] closestBall = artifacts.get(0);
-            // Calculate angle to ball
             double ballAngle = calculateBallAngle(closestBall[0]);
             turnCorrection = Range.clip(ballAngle * TURN_GAIN, -MAX_TURN, MAX_TURN);
-            telemetry.addData("Ball Found", "Angle: %.2f", ballAngle);
+            telemetry.addData("Ball Tracking", "Angle: %.2f", ballAngle);
         } else {
-            // No ball, use IMU to maintain heading
+            // No ball, use IMU
             double headingError = targetHeading - getHeading();
+            while (headingError > 180) headingError -= 360;
+            while (headingError <= -180) headingError += 360;
             turnCorrection = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
         }
 
@@ -357,7 +378,7 @@ public class RobotAutonomous4 extends LinearOpMode {
                 .addProcessor(colorLocatorPurple)
                 .addProcessor(colorLocatorGreen)
                 .setCameraResolution(new Size(320, 240))
-                .setCamera(hardwareMap.get(WebcamName.class, "cameraa"))
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                 .build();
     }
 
@@ -366,7 +387,6 @@ public class RobotAutonomous4 extends LinearOpMode {
         tagVisible = false;
         for (AprilTagDetection detection : detections) {
             if (detection.metadata != null) {
-                // Use any tag or specific ID
                 tagVisible = true;
                 lastTagRange = detection.ftcPose.range;
                 lastTagBearing = detection.ftcPose.bearing;
