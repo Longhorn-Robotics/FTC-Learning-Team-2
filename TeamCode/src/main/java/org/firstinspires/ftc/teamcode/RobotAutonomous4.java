@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.Range;
 import com.qualcomm.robotcore.util.SortOrder;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -50,9 +51,9 @@ public class RobotAutonomous4 extends LinearOpMode {
     private static final double HEADING_THRESHOLD = 2.0; // Degrees
     private static final double DISTANCE_THRESHOLD = 1.0; // Inches
 
-    // Camera Intrinsics (Moto E5 Play Selfie - from RobotAutonomous3)
-    private static final double FX = 220.9;
-    private static final double FY = 220.9;
+    // Camera Intrinsics (Logitech C270 - from RobotAutonomous)
+    private static final double FX = 357.1;
+    private static final double FY = 357.1;
     private static final double CX = 159.5;
     private static final double CY = 119.5;
 
@@ -356,7 +357,7 @@ public class RobotAutonomous4 extends LinearOpMode {
                 .addProcessor(colorLocatorPurple)
                 .addProcessor(colorLocatorGreen)
                 .setCameraResolution(new Size(320, 240))
-                .setCamera(BuiltinCameraDirection.FRONT)
+                .setCamera(hardwareMap.get(WebcamName.class, "cameraa"))
                 .build();
     }
 
