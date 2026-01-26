@@ -47,11 +47,9 @@ public class RobotAutonomous4 extends LinearOpMode {
     
     // --- FIELD GEOMETRY ---
     // Distance from the AprilTag (diagonal) to reach the "Lane" start point.
-    // This is the point where the robot is aligned with the column of ball rows.
     private static final double LANE_ALIGNMENT_DISTANCE = 36.0; 
     
-    // Y-Distances to reverse down the lane for each row. 
-    // 0 is the "Lane Start" (aligned with tag). Positive values mean further down the field.
+    // Y-Distances to reverse down the lane for each row.
     private double[] rowDepths = {12.0, 36.0, 60.0, 84.0}; 
 
     // Camera Intrinsics (Logitech C270)
@@ -64,15 +62,15 @@ public class RobotAutonomous4 extends LinearOpMode {
     private enum State {
         INIT,
         ALIGN_TO_TAG_START,    // Face the tag initially
-        DRIVE_TO_LANE,         // Move away from tag to reach the alignment lane
+        DRIVE_TO_LANE,         // Move away/towards tag to reach alignment lane (Hybrid)
         TURN_UP,               // Turn to 0 degrees (Up)
-        DRIVE_TO_ROW,          // Reverse down the lane to the specific row
+        DRIVE_TO_ROW,          // Reverse down the lane (Blind)
         TURN_TO_BALLS,         // Turn CW (-90) to face balls
         COLLECT_BALLS,         // Drive forward and intake
         REVERSE_FROM_BALLS,    // Reverse back to the lane
         TURN_UP_RETURN,        // Turn back to 0 degrees
-        RETURN_TO_LANE_START,  // Drive forward (Up) to the start of the lane
-        TURN_TO_TAG,           // Turn to face the tag (-45)
+        RETURN_TO_LANE_START,  // Drive forward (Up) to the start of the lane (Hybrid)
+        TURN_TO_TAG,           // Turn to face the tag (Scan)
         DRIVE_TO_SCORE,        // Drive closer to tag for scoring
         SCORE,                 // Launch balls
         DONE
@@ -84,9 +82,12 @@ public class RobotAutonomous4 extends LinearOpMode {
 
     // --- LOCALIZATION MEMORY ---
     private boolean tagVisible = false;
-    private double lastTagRange = 0;
-    private double lastTagBearing = 0;
+    private double lastKnownTagRange = 0;
+    private double lastKnownTagBearing = 0;
+    
+    // Encoders
     private double startEncoderPos = 0; // For relative moves
+    private double lastKnownTagEncoderPos = 0; // Encoder value when tag was last seen
 
     @Override
     public void runOpMode() {
@@ -129,22 +130,24 @@ public class RobotAutonomous4 extends LinearOpMode {
             telemetry.addData("State", currentState);
             telemetry.addData("Row", currentRow + 1);
             telemetry.addData("Tag Visible", tagVisible ? "YES" : "NO");
-            telemetry.addData("Tag Range", "%.1f", lastTagRange);
+            telemetry.addData("Tag Range", "%.1f", lastKnownTagRange);
             telemetry.addData("Heading", "%.1f", getHeading());
-            telemetry.addData("Enc Dist", "%.1f", getRelativeEncoderDistance());
 
             switch (currentState) {
                 case ALIGN_TO_TAG_START:
                     // Step 1: Face the AprilTag (approx -45 deg for Top-Right corner)
+                    // We assume start is roughly aligned, so just get the heading right first
                     if (turnToHeading(-45)) {
                         currentState = State.DRIVE_TO_LANE;
+                        // Reset localization anchor for the next step
+                        resetRelativeEncoder(); 
                     }
                     break;
 
                 case DRIVE_TO_LANE:
                     // Step 2: Drive backwards/forwards to reach the "Lane"
-                    // Target is LANE_ALIGNMENT_DISTANCE from tag
-                    if (driveToTagDistance(LANE_ALIGNMENT_DISTANCE)) {
+                    // Use Hybrid method: Tag if visible, else encoders relative to last tag
+                    if (driveToTagHybrid(LANE_ALIGNMENT_DISTANCE, -45)) {
                         currentState = State.TURN_UP;
                     }
                     break;
@@ -168,7 +171,6 @@ public class RobotAutonomous4 extends LinearOpMode {
 
                 case TURN_TO_BALLS:
                     // Step 4: Turn CW to face balls.
-                    // If Up is 0, Right is -90. Robot is left of balls, so turn Right.
                     if (turnToHeading(-90)) {
                         resetRelativeEncoder();
                         currentState = State.COLLECT_BALLS;
@@ -202,42 +204,48 @@ public class RobotAutonomous4 extends LinearOpMode {
                     break;
 
                 case RETURN_TO_LANE_START:
-                    // Step 5 Cont: Return to the start of the lane (Tag Anchor)
-                    // We moved -currentLaneDepth down, so move +currentLaneDepth up
+                    // Step 5 Cont: Return to the start of the lane
+                    // We moved -currentLaneDepth down, so move +currentLaneDepth up.
+                    // IMPORTANT: If we see the tag, we can switch to Tag Tracking?
+                    // For now, rely on strict distance to get back to the "Lane Start" 
+                    // which is LANE_ALIGNMENT_DISTANCE from tag.
                     if (driveStraight(currentLaneDepth, 0)) {
                         currentState = State.TURN_TO_TAG;
                     }
                     break;
 
                 case TURN_TO_TAG:
-                    // Step 6: Turn CW to face Tag (-45)
-                    if (turnToHeading(-45)) {
-                        currentState = State.DRIVE_TO_SCORE;
+                    // Step 6: Turn CW until facing AprilTag
+                    // If tag becomes visible, we can stop turning and lock on.
+                    boolean turned = turnToHeading(-45);
+                    if (tagVisible || turned) {
+                         currentState = State.DRIVE_TO_SCORE;
                     }
                     break;
                     
                 case DRIVE_TO_SCORE:
                     // Drive closer to tag (e.g. 12 inches) to score
-                    if (driveToTagDistance(12.0)) {
+                    // Again, use Hybrid to be robust
+                    if (driveToTagHybrid(12.0, -45)) {
                          currentState = State.SCORE;
                     }
                     break;
 
                 case SCORE:
-                    // Launch Code Placeholder
                     robot.moveRobot(0,0);
                     telemetry.addData("Action", "LAUNCHING!");
                     telemetry.update();
                     
+                    // --- LAUNCHER CODE PLACEHOLDER ---
                     // robot.launchItems(1.0);
                     // sleep(1000);
                     // robot.idleLauncher(0);
+                    // ---------------------------------
 
                     currentRow++;
                     if (currentRow >= rowDepths.length) {
                         currentState = State.DONE;
                     } else {
-                        // Go back out to lane alignment for next row
                         currentState = State.DRIVE_TO_LANE; 
                     }
                     break;
@@ -252,23 +260,40 @@ public class RobotAutonomous4 extends LinearOpMode {
 
     // --- NAVIGATION METHODS ---
 
-    private boolean driveToTagDistance(double targetDistance) {
-        // Moves robot along its current heading to reach specific distance from tag
-        // Handles "Go backwards/forwards" logic
+    private boolean driveToTagHybrid(double targetDistance, double targetHeading) {
+        // Robust Navigation: Uses AprilTag if visible, Dead Reckoning if not.
         
         double rangeError;
         double headingError;
 
         if (tagVisible) {
-            rangeError = lastTagRange - targetDistance;
-            // Face the tag directly
-            headingError = lastTagBearing; 
+            // -- VISUAL NAVIGATION --
+            // Error = Current - Target. 
+            // If current 12, target 36, error -24. We want to be farther.
+            // Move backward. -Power. Correct.
+            rangeError = lastKnownTagRange - targetDistance;
+            headingError = lastKnownTagBearing;
+            
+            // Update "Anchor" for blind fallback
+            resetRelativeEncoder(); 
+            lastKnownTagEncoderPos = 0; // We just reset it
         } else {
-            // Lost tag? Stop and search? 
-            // Or assume we are close and just rely on last known?
-            // For safety, stop if lost during this critical alignment.
-            robot.moveRobot(0, 0);
-            return false;
+            // -- BLIND FALLBACK --
+            // We assume we were at 'lastKnownTagRange' when we lost visual.
+            // Encoder Distance: Positive = Forward (decreasing range to tag), Negative = Backward (increasing range)
+            // Current Est Range = LastRange - EncoderDistance
+            // Example: Last 12. Back up 5 inches (Enc = -5). Est Range = 12 - (-5) = 17. Correct.
+            
+            double currentEncDist = getRelativeEncoderDistance();
+            double estimatedRange = lastKnownTagRange - currentEncDist;
+            
+            rangeError = estimatedRange - targetDistance;
+            
+            // Blind Heading
+            headingError = targetHeading - getHeading();
+            
+            telemetry.addData("Mode", "BLIND RECKONING");
+            telemetry.addData("Est Range", "%.1f", estimatedRange);
         }
 
         if (Math.abs(rangeError) < DISTANCE_THRESHOLD) {
@@ -279,7 +304,11 @@ public class RobotAutonomous4 extends LinearOpMode {
         double drive = Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
         double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
 
+        // If facing tag, Forward drive reduces range. 
+        // Logic check: rangeError = (Current - Target). 
+        // If Current > Target (Too far), Error > 0. Drive > 0. Forward. Reduces Range. Correct.
         robot.moveRobot(drive - turn, drive + turn);
+        
         return false;
     }
 
@@ -388,8 +417,10 @@ public class RobotAutonomous4 extends LinearOpMode {
         for (AprilTagDetection detection : detections) {
             if (detection.metadata != null) {
                 tagVisible = true;
-                lastTagRange = detection.ftcPose.range;
-                lastTagBearing = detection.ftcPose.bearing;
+                lastKnownTagRange = detection.ftcPose.range;
+                lastKnownTagBearing = detection.ftcPose.bearing;
+                // Note: We do NOT reset encoders here. We reset them explicitly when state changes or when hybrid lock occurs.
+                // Actually, hybrid method resets them when tag IS visible to keep anchor fresh.
                 break;
             }
         }
