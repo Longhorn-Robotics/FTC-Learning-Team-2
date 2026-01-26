@@ -1,0 +1,8 @@
+{
+  "track_id": "autonomous_routine_20260123",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-23T12:00:00Z",
+  "updated_at": "2026-01-23T12:00:00Z",
+  "description": "Build the core autonomous routine covering the cycle of alignment, navigation to rows, collection (respecting the 2-ball limit), scoring, and the end-game exit strategy."
+}
