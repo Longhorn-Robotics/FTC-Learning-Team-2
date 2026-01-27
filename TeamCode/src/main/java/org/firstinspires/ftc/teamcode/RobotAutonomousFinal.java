@@ -42,6 +42,13 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private double lastKnownTagRange = 0;
     private double startEncoderPos = 0;
 
+    // --- STATE MACHINE ---
+    private enum State {
+        INIT,
+        DONE
+    }
+    private State currentState = State.INIT;
+
     @Override
     public void runOpMode() {
         // 1. Initialize Hardware
@@ -75,14 +82,67 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
         waitForStart();
 
-        if (opModeIsActive()) {
-            // Autonomous routine will go here
-            telemetry.addData("Status", "Running");
-            telemetry.update();
+        while (opModeIsActive()) {
+            // Update sensor data
+            updateLocalization();
+            
+            // Comprehensive Telemetry
+            updateTelemetry();
+
+            switch (currentState) {
+                case INIT:
+                    // Main logic will be added here
+                    break;
+                case DONE:
+                    robot.moveRobot(0, 0);
+                    break;
+            }
         }
         
         // Close vision portal when done
         visionPortal.close();
+    }
+
+    private void updateLocalization() {
+        java.util.List<org.firstinspires.ftc.vision.apriltag.AprilTagDetection> detections = aprilTag.getDetections();
+        tagVisible = false;
+        for (org.firstinspires.ftc.vision.apriltag.AprilTagDetection detection : detections) {
+            if (detection.metadata != null) {
+                tagVisible = true;
+                lastTagRange = detection.ftcPose.range;
+                lastTagBearing = detection.ftcPose.bearing;
+                lastTagYaw = detection.ftcPose.yaw;
+                lastKnownTagRange = lastTagRange;
+                break;
+            }
+        }
+    }
+
+    private void updateTelemetry() {
+        telemetry.addData("--- STATE ---", currentState);
+        telemetry.addData("Tag Visible", tagVisible ? "YES" : "NO");
+        if (tagVisible) {
+            telemetry.addData("Tag Range", "%.2f\"", lastTagRange);
+            telemetry.addData("Tag Bearing", "%.2f°", lastTagBearing);
+        }
+        telemetry.addData("Heading", "%.2f°", getHeading());
+        telemetry.addData("Encoder Pos (L/R)", "%d / %d", 
+                leftEncoder.getCurrentPosition(), rightEncoder.getCurrentPosition());
+        telemetry.addData("Relative Dist", "%.2f\"", getRelativeEncoderDistance());
+        telemetry.update();
+    }
+
+    private double getHeading() {
+        return imu.getRobotYawPitchRollAngles().getYaw(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES);
+    }
+
+    private void resetRelativeEncoder() {
+        startEncoderPos = (leftEncoder.getCurrentPosition() + rightEncoder.getCurrentPosition()) / 2.0;
+    }
+
+    private double getRelativeEncoderDistance() {
+        double currentPos = (leftEncoder.getCurrentPosition() + rightEncoder.getCurrentPosition()) / 2.0;
+        return (currentPos - startEncoderPos) / COUNTS_PER_INCH;
     }
 
     private void initVision() {
