@@ -10,11 +10,11 @@
 - [x] Task: Implement `turnToHeading` with IMU normalization (-180 to 180). [799d5c9]
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Hybrid Navigation Foundation' (Protocol in workflow.md)
 
-## Phase 3: Collection Logic
+## Phase 3: Collection Logic [checkpoint: 53fc902]
 - [x] Task: Implement the "Lane Alignment" sequence to position the robot for row runs. [223a7a4]
 - [x] Task: Implement row-specific reversing and 2-ball limit intake logic. [223a7a4]
 - [x] Task: Implement return-to-lane-start logic using blind reckoning. [223a7a4]
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Collection Logic' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Collection Logic' (Protocol in workflow.md)
 
 ## Phase 4: Scoring and End-Game
 - [ ] Task: Implement AprilTag alignment and launch sequence (placeholders for manual code).
