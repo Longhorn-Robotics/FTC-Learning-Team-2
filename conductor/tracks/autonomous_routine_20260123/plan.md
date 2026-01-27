@@ -11,9 +11,9 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Hybrid Navigation Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Collection Logic
-- [ ] Task: Implement the "Lane Alignment" sequence to position the robot for row runs.
-- [ ] Task: Implement row-specific reversing and 2-ball limit intake logic.
-- [ ] Task: Implement return-to-lane-start logic using blind reckoning.
+- [x] Task: Implement the "Lane Alignment" sequence to position the robot for row runs. [223a7a4]
+- [x] Task: Implement row-specific reversing and 2-ball limit intake logic. [223a7a4]
+- [x] Task: Implement return-to-lane-start logic using blind reckoning. [223a7a4]
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Collection Logic' (Protocol in workflow.md)
 
 ## Phase 4: Scoring and End-Game
