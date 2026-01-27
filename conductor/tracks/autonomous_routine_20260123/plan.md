@@ -1,9 +1,9 @@
 # Implementation Plan: Core Autonomous Routine
 
-## Phase 1: Scaffolding and Setup
+## Phase 1: Scaffolding and Setup [checkpoint: 98d7c75]
 - [x] Task: Create `RobotAutonomousFinal.java` and initialize hardware/vision. [6d9e85f]
 - [x] Task: Implement comprehensive telemetry helper for real-time sensor/state monitoring. [4756803]
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Scaffolding and Setup' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Scaffolding and Setup' (Protocol in workflow.md)
 
 ## Phase 2: Hybrid Navigation Foundation
 - [ ] Task: Implement `driveToTagHybrid` logic for visual tracking with encoder/IMU fallback.
