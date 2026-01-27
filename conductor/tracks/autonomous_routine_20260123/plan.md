@@ -7,7 +7,7 @@
 
 ## Phase 2: Hybrid Navigation Foundation
 - [x] Task: Implement `driveToTagHybrid` logic for visual tracking with encoder/IMU fallback. [799d5c9]
-- [ ] Task: Implement `turnToHeading` with IMU normalization (-180 to 180).
+- [x] Task: Implement `turnToHeading` with IMU normalization (-180 to 180). [799d5c9]
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Hybrid Navigation Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Collection Logic
