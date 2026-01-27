@@ -1,7 +1,7 @@
 # Implementation Plan: Core Autonomous Routine
 
 ## Phase 1: Scaffolding and Setup
-- [ ] Task: Create `RobotAutonomousFinal.java` and initialize hardware/vision.
+- [x] Task: Create `RobotAutonomousFinal.java` and initialize hardware/vision. [6d9e85f]
 - [ ] Task: Implement comprehensive telemetry helper for real-time sensor/state monitoring.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Scaffolding and Setup' (Protocol in workflow.md)
 
