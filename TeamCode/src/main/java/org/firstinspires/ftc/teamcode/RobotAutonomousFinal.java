@@ -7,12 +7,17 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
-@Autonomous(name = "Robot Auto Final", group = "Robot")
+import java.util.List;
+
+@Autonomous(name = "Robot Auto Final - Fixed", group = "Robot")
 public class RobotAutonomousFinal extends LinearOpMode {
 
     // --- HARDWARE ---
@@ -25,7 +30,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private AprilTagProcessor aprilTag;
 
     // --- CONSTANTS ---
-    // Using constants derived from previous iterations
+    // Calculated: 537.7 (goBILDA 19.2:1) / (96mm wheel circ in inches) = 45.28
     private static final double COUNTS_PER_INCH = 45.28;
     
     // Camera Intrinsics (Logitech C270)
@@ -34,19 +39,27 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private static final double CX = 159.5;
     private static final double CY = 119.5;
 
+    // --- TUNING CONSTANTS (Proportional Gains) ---
+    private static final double MAX_SPEED = 0.4; 
+    private static final double MAX_TURN = 0.25; 
+    private static final double SPEED_GAIN = 0.03;
+    private static final double TURN_GAIN = 0.015; 
+    private static final double HEADING_THRESHOLD = 1.5; 
+    private static final double DISTANCE_THRESHOLD = 1.0; 
+
+    // Field angle of the corner AprilTag (Top-Right corner faces South-West = -45 degrees)
+    private static final double TAG_FIELD_ANGLE = -45.0;
+
     // --- LOCALIZATION MEMORY ---
     private boolean tagVisible = false;
     private double lastTagRange = 0;
     private double lastTagBearing = 0;
-    private double lastTagYaw = 0;
     private double lastKnownTagRange = 0;
     private double startEncoderPos = 0;
+    private double headingOffset = 0; // Absolute field calibration
 
     // --- FIELD GEOMETRY ---
-    // Distance from the AprilTag (diagonal) to reach the "Lane" start point.
     private static final double LANE_ALIGNMENT_DISTANCE = 36.0; 
-    
-    // Y-Distances to reverse down the lane for each row.
     private double[] rowDepths = {12.0, 36.0, 60.0, 84.0}; 
 
     // --- STATE MACHINE ---
@@ -75,303 +88,252 @@ public class RobotAutonomousFinal extends LinearOpMode {
         // 1. Initialize Hardware
         robot.AutoInit(hardwareMap);
 
-        // Access encoders (ld and rd as defined in RobotHardware)
         leftEncoder = hardwareMap.get(DcMotor.class, "ld");
         rightEncoder = hardwareMap.get(DcMotor.class, "rd");
-        
-        // Ensure encoder directions match RobotHardware directions
         leftEncoder.setDirection(DcMotor.Direction.REVERSE);
         rightEncoder.setDirection(DcMotor.Direction.FORWARD);
-        
         leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // Initialize IMU
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
-        imu.resetYaw();
 
         // 2. Initialize Vision
         initVision();
 
-        telemetry.addData("Status", "Initialized");
+        telemetry.addData("Status", "Initialized - READY");
         telemetry.update();
 
         waitForStart();
 
-        // Timer for autonomous period (30 seconds)
         ElapsedTime autoTimer = new ElapsedTime();
         autoTimer.reset();
+
+        // --- INITIAL HEADING CALIBRATION ---
+        // Lock IMU 0 to Field Up by looking at the corner tag
+        ElapsedTime visionTimeout = new ElapsedTime();
+        while (opModeIsActive() && !tagVisible && visionTimeout.seconds() < 4.0) {
+            updateLocalization();
+            telemetry.addData("Status", "Waiting for initial tag lock...");
+            telemetry.update();
+        }
+
+        if (tagVisible) {
+            // RobotHeading = TagFieldAngle - TagBearing
+            headingOffset = (TAG_FIELD_ANGLE - lastTagBearing) - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            lastKnownTagRange = lastTagRange;
+            telemetry.addData("Status", "Calibrated! Offset: %.1f", headingOffset);
+        } else {
+            headingOffset = 0; 
+            lastKnownTagRange = 24.0;
+            telemetry.addData("Status", "Calibration Failed. Using raw IMU.");
+        }
+        telemetry.update();
 
         if (opModeIsActive()) {
             currentState = State.ALIGN_TO_TAG_START;
         }
 
         while (opModeIsActive()) {
-            // Update sensor data
             updateLocalization();
             
-            // Comprehensive Telemetry
-            updateTelemetry();
-            
             // --- END GAME SAFETY CHECK ---
-            // If less than 5 seconds remain, abort collection and exit launch zone
             if (autoTimer.seconds() > 25.0 && currentState != State.DONE) {
-                telemetry.addData("ALERT", "END GAME - ABORTING TO SAFE ZONE");
-                // Logic to move to safe zone:
-                // Assuming Safe Zone is away from the wall or tag. 
-                // Simple strategy: Stop and turn perpendicular or drive away?
-                // Instructions say "Move to Safe Zone". Let's assume driving to lane start is safe.
-                // Or just parking.
-                // For now, let's drive forward a bit to ensure we aren't touching the launch line.
-                // If in SCORE state, we are in launch zone.
-                if (currentState == State.SCORE || currentState == State.DRIVE_TO_SCORE) {
-                     // Move away from launch zone (Tag)
-                     if (driveStraight(12.0, 0)) { // Drive UP 12 inches
-                         currentState = State.DONE;
-                     }
-                } else {
-                    // If not in launch zone, just stop to be safe?
-                    // Or continue current action? Instructions say "exits the launch zone".
-                    // Best to just stop if we aren't near the zone.
-                    currentState = State.DONE;
-                }
+                if (performNavigationStep(60.0, 0)) currentState = State.DONE;
+            } else {
+                executeStateMachine();
             }
-
-            switch (currentState) {
-                case INIT:
-                    break;
-
-                case ALIGN_TO_TAG_START:
-                    // Step 1: Face the AprilTag (approx -45 deg for Top-Right corner)
-                    if (turnToHeading(-45)) {
-                        currentState = State.DRIVE_TO_LANE;
-                        resetRelativeEncoder();
-                    }
-                    break;
-
-                case DRIVE_TO_LANE:
-                    // Step 2: Drive to "Lane" start point (Hybrid: Visual or Blind)
-                    if (driveToTagHybrid(LANE_ALIGNMENT_DISTANCE, -45)) {
-                        currentState = State.TURN_UP;
-                    }
-                    break;
-
-                case TURN_UP:
-                    // Step 3: Turn to face Up (0 deg)
-                    if (turnToHeading(0)) {
-                        resetRelativeEncoder();
-                        currentLaneDepth = rowDepths[currentRow];
-                        currentState = State.DRIVE_TO_ROW;
-                    }
-                    break;
-
-                case DRIVE_TO_ROW:
-                    // Step 3 Cont: Reverse down the lane (Blind)
-                    if (driveStraight(-currentLaneDepth, 0)) {
-                        currentState = State.TURN_TO_BALLS;
-                    }
-                    break;
-
-                case TURN_TO_BALLS:
-                    // Step 4: Turn CW to face balls (-90 deg)
-                    if (turnToHeading(-90)) {
-                        resetRelativeEncoder();
-                        currentState = State.COLLECT_BALLS;
-                    }
-                    break;
-
-                case COLLECT_BALLS:
-                    // Step 4 Cont: Drive forward, intake on
-                    robot.runIntake(1.0);
-                    // Drive 24 inches or until collected (placeholder distance)
-                    // TODO: Implement sensor-based collection stop (color/limit switch)
-                    if (driveStraight(24.0, -90)) { 
-                        robot.runIntake(0);
-                        resetRelativeEncoder();
-                        currentState = State.REVERSE_FROM_BALLS;
-                    }
-                    break;
-
-                case REVERSE_FROM_BALLS:
-                    // Step 5: Reverse back to the lane point
-                    if (driveStraight(-24.0, -90)) {
-                        currentState = State.TURN_UP_RETURN;
-                    }
-                    break;
-
-                case TURN_UP_RETURN:
-                    // Step 5 Cont: Turn CCW back to Up (0 deg)
-                    if (turnToHeading(0)) {
-                        resetRelativeEncoder();
-                        currentState = State.RETURN_TO_LANE_START;
-                    }
-                    break;
-
-                case RETURN_TO_LANE_START:
-                    // Step 5 Cont: Return to the start of the lane (Tag Anchor)
-                    if (driveStraight(currentLaneDepth, 0)) {
-                        currentState = State.TURN_TO_TAG;
-                    }
-                    break;
-
-                case TURN_TO_TAG:
-                    // Step 6: Turn CW to face Tag (-45)
-                    // Hybrid turn: If tag seen, lock on? For now, just turn to heading.
-                    if (turnToHeading(-45)) {
-                        currentState = State.DRIVE_TO_SCORE;
-                    }
-                    break;
-
-                case DRIVE_TO_SCORE:
-                    // Drive closer to tag (e.g. 12 inches) to score
-                    if (driveToTagHybrid(12.0, -45)) {
-                         currentState = State.SCORE;
-                    }
-                    break;
-
-                case SCORE:
-                    robot.moveRobot(0,0);
-                    // Launch sequence placeholder
-                    robot.launchItems(1.0);
-                    if (getRuntime() > 2.0) { // Simple timer placeholder
-                         // Reset runtime logic needed or use separate timer
-                    }
-                    
-                    // Proceed to next row
-                    currentRow++;
-                    if (currentRow >= rowDepths.length) {
-                        currentState = State.DONE;
-                    } else {
-                        currentState = State.DRIVE_TO_LANE; 
-                    }
-                    break;
-
-                case DONE:
-                    robot.moveRobot(0, 0);
-                    break;
-            }
+            
+            updateTelemetry();
         }
-        
-        // Close vision portal when done
         visionPortal.close();
     }
 
-    // --- TUNING CONSTANTS ---
-    private static final double MAX_SPEED = 0.5;
-    private static final double MAX_TURN = 0.4;
-    private static final double SPEED_GAIN = 0.04;
-    private static final double TURN_GAIN = 0.02;
-    private static final double HEADING_THRESHOLD = 2.0; // Degrees
-    private static final double DISTANCE_THRESHOLD = 1.0; // Inches
+    private void executeStateMachine() {
+        switch (currentState) {
+            case INIT:
+                break;
 
-    private boolean driveToTagHybrid(double targetDistance, double targetHeading) {
+            case ALIGN_TO_TAG_START:
+                if (performNavigationStep(lastKnownTagRange, -45)) {
+                    currentState = State.DRIVE_TO_LANE;
+                }
+                break;
+
+            case DRIVE_TO_LANE:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, -45)) {
+                    currentState = State.TURN_UP;
+                }
+                break;
+
+            case TURN_UP:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, 0)) {
+                    currentLaneDepth = rowDepths[currentRow];
+                    resetRelativeEncoder();
+                    currentState = State.DRIVE_TO_ROW;
+                }
+                break;
+
+            case DRIVE_TO_ROW:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, 0)) {
+                    currentState = State.TURN_TO_BALLS;
+                }
+                break;
+
+            case TURN_TO_BALLS:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, -90)) {
+                    resetRelativeEncoder();
+                    currentState = State.COLLECT_BALLS;
+                }
+                break;
+
+            case COLLECT_BALLS:
+                robot.runIntake(1.0);
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth + 24.0, -90)) { 
+                    robot.runIntake(0);
+                    currentState = State.REVERSE_FROM_BALLS;
+                }
+                break;
+
+            case REVERSE_FROM_BALLS:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, -90)) {
+                    currentState = State.TURN_UP_RETURN;
+                }
+                break;
+
+            case TURN_UP_RETURN:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, 0)) {
+                    currentState = State.RETURN_TO_LANE_START;
+                }
+                break;
+
+            case RETURN_TO_LANE_START:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, 0)) {
+                    currentState = State.TURN_TO_TAG;
+                }
+                break;
+
+            case TURN_TO_TAG:
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, -45)) {
+                    currentState = State.DRIVE_TO_SCORE;
+                }
+                break;
+
+            case DRIVE_TO_SCORE:
+                if (performNavigationStep(12.0, -45)) {
+                         currentState = State.SCORE;
+                }
+                break;
+
+            case SCORE:
+                moveRobot(0,0);
+                robot.launchItems(1.0);
+                sleep(1500);
+                robot.launchItems(0);
+                
+                currentRow++;
+                if (currentRow >= 2) { 
+                    currentState = State.DONE;
+                } else {
+                    currentState = State.DRIVE_TO_LANE; 
+                }
+                break;
+
+            case DONE:
+                moveRobot(0, 0);
+                break;
+        }
+    }
+
+    /**
+     * Unified Hybrid Navigation
+     * Uses baseline from RobotAutonomous.java: RangeError = Current - Target
+     */
+    private boolean performNavigationStep(double targetRangeFromTag, double targetFieldHeading) {
         double rangeError;
         double headingError;
 
         if (tagVisible) {
-            // Visual Navigation
-            rangeError = lastTagRange - targetDistance;
-            headingError = lastTagBearing;
+            rangeError = lastTagRange - targetRangeFromTag;
             
-            // Update anchor for blind fallback
+            // If the state is meant to face the corner, use Vision Bearing.
+            if (Math.abs(targetFieldHeading - TAG_FIELD_ANGLE) < 10) {
+                headingError = lastTagBearing;
+            } else {
+                headingError = targetFieldHeading - getHeading();
+            }
+            
             resetRelativeEncoder();
             lastKnownTagRange = lastTagRange;
         } else {
-            // Blind Fallback (Dead Reckoning)
-            // Estimated Range = Last Known Range - Distance Traveled Since Loss
+            // Sensor Fallback (Dead Reckoning)
             double currentEncDist = getRelativeEncoderDistance();
             double estimatedRange = lastKnownTagRange - currentEncDist;
-            
-            rangeError = estimatedRange - targetDistance;
-            headingError = targetHeading - getHeading();
+            rangeError = estimatedRange - targetRangeFromTag;
+            headingError = targetFieldHeading - getHeading();
         }
 
-        if (Math.abs(rangeError) < DISTANCE_THRESHOLD) {
-            robot.moveRobot(0, 0);
-            return true;
-        }
-
-        double drive = com.qualcomm.robotcore.util.Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
-        double turn = com.qualcomm.robotcore.util.Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
-
-        robot.moveRobot(drive - turn, drive + turn);
-        return false;
-    }
-
-    private boolean turnToHeading(double targetHeading) {
-        double headingError = targetHeading - getHeading();
-
-        // Normalize error to -180 to 180
+        // Normalize angle to -180 to 180
         while (headingError > 180) headingError -= 360;
         while (headingError <= -180) headingError += 360;
 
-        if (Math.abs(headingError) < HEADING_THRESHOLD) {
-            robot.moveRobot(0, 0);
+        // Apply gains
+        double drive = Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
+        double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+
+        if (Math.abs(rangeError) < DISTANCE_THRESHOLD && Math.abs(headingError) < HEADING_THRESHOLD) {
+            moveRobot(0, 0);
             return true;
         }
 
-        double turn = com.qualcomm.robotcore.util.Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
-        robot.moveRobot(-turn, turn);
+        moveRobot(drive, turn);
         return false;
     }
 
-    private boolean driveStraight(double inches, double targetHeading) {
-        double currentDist = getRelativeEncoderDistance();
-        double distError = inches - currentDist;
-        double headingError = targetHeading - getHeading();
-
-        // Normalize heading error
-        while (headingError > 180) headingError -= 360;
-        while (headingError <= -180) headingError += 360;
-
-        if (Math.abs(distError) < DISTANCE_THRESHOLD) {
-            robot.moveRobot(0, 0);
-            return true;
+    /**
+     * Tank Drive Mixer
+     * Corrected signs: Positive yaw results in CCW turn to match IMU.
+     */
+    private void moveRobot(double x, double yaw) {
+        double leftPower    = x + yaw;
+        double rightPower   = x - yaw;
+        
+        double max = Math.max(Math.abs(leftPower), Math.abs(rightPower));
+        if (max > 1.0) {
+            leftPower /= max;
+            rightPower /= max;
         }
-
-        double drive = com.qualcomm.robotcore.util.Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
-        double turn = com.qualcomm.robotcore.util.Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
-
-        robot.moveRobot(drive - turn, drive + turn);
-        return false;
+        robot.moveRobot(leftPower, rightPower);
     }
 
     private void updateLocalization() {
-        java.util.List<org.firstinspires.ftc.vision.apriltag.AprilTagDetection> detections = aprilTag.getDetections();
+        List<AprilTagDetection> detections = aprilTag.getDetections();
         tagVisible = false;
-        for (org.firstinspires.ftc.vision.apriltag.AprilTagDetection detection : detections) {
+        for (AprilTagDetection detection : detections) {
             if (detection.metadata != null) {
                 tagVisible = true;
                 lastTagRange = detection.ftcPose.range;
                 lastTagBearing = detection.ftcPose.bearing;
-                lastTagYaw = detection.ftcPose.yaw;
-                lastKnownTagRange = lastTagRange;
                 break;
             }
         }
     }
 
     private void updateTelemetry() {
-        telemetry.addData("--- STATE ---", currentState);
-        telemetry.addData("Tag Visible", tagVisible ? "YES" : "NO");
-        if (tagVisible) {
-            telemetry.addData("Tag Range", "%.2f\"", lastTagRange);
-            telemetry.addData("Tag Bearing", "%.2f°", lastTagBearing);
-        }
-        telemetry.addData("Heading", "%.2f°", getHeading());
-        telemetry.addData("Encoder Pos (L/R)", "%d / %d", 
-                leftEncoder.getCurrentPosition(), rightEncoder.getCurrentPosition());
-        telemetry.addData("Relative Dist", "%.2f\"", getRelativeEncoderDistance());
+        telemetry.addData("STATE", currentState);
+        telemetry.addData("Tag", tagVisible ? "VISIBLE" : "LOST");
+        telemetry.addData("Field Heading", "%.1f°", getHeading());
+        telemetry.addData("Enc Dist", "%.1f\"", getRelativeEncoderDistance());
         telemetry.update();
     }
 
     private double getHeading() {
-        return imu.getRobotYawPitchRollAngles().getYaw(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES);
+        double rawYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        return rawYaw + headingOffset;
     }
 
     private void resetRelativeEncoder() {
@@ -387,7 +349,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
         aprilTag = new AprilTagProcessor.Builder()
                 .setLensIntrinsics(FX, FY, CX, CY)
                 .build();
-
+        aprilTag.setDecimation(2); 
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTag)
                 .setCameraResolution(new Size(320, 240))
