@@ -103,6 +103,10 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
         waitForStart();
 
+        // Timer for autonomous period (30 seconds)
+        ElapsedTime autoTimer = new ElapsedTime();
+        autoTimer.reset();
+
         if (opModeIsActive()) {
             currentState = State.ALIGN_TO_TAG_START;
         }
@@ -113,6 +117,30 @@ public class RobotAutonomousFinal extends LinearOpMode {
             
             // Comprehensive Telemetry
             updateTelemetry();
+            
+            // --- END GAME SAFETY CHECK ---
+            // If less than 5 seconds remain, abort collection and exit launch zone
+            if (autoTimer.seconds() > 25.0 && currentState != State.DONE) {
+                telemetry.addData("ALERT", "END GAME - ABORTING TO SAFE ZONE");
+                // Logic to move to safe zone:
+                // Assuming Safe Zone is away from the wall or tag. 
+                // Simple strategy: Stop and turn perpendicular or drive away?
+                // Instructions say "Move to Safe Zone". Let's assume driving to lane start is safe.
+                // Or just parking.
+                // For now, let's drive forward a bit to ensure we aren't touching the launch line.
+                // If in SCORE state, we are in launch zone.
+                if (currentState == State.SCORE || currentState == State.DRIVE_TO_SCORE) {
+                     // Move away from launch zone (Tag)
+                     if (driveStraight(12.0, 0)) { // Drive UP 12 inches
+                         currentState = State.DONE;
+                     }
+                } else {
+                    // If not in launch zone, just stop to be safe?
+                    // Or continue current action? Instructions say "exits the launch zone".
+                    // Best to just stop if we aren't near the zone.
+                    currentState = State.DONE;
+                }
+            }
 
             switch (currentState) {
                 case INIT:
