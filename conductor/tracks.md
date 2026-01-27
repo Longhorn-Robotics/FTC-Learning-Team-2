@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Build the core autonomous routine covering the cycle of alignment, navigation to rows, collection (respecting the 2-ball limit), scoring, and the end-game exit strategy.**
+- [x] **Track: Build the core autonomous routine covering the cycle of alignment, navigation to rows, collection (respecting the 2-ball limit), scoring, and the end-game exit strategy.**
   *Link: [./tracks/autonomous_routine_20260123/](./tracks/autonomous_routine_20260123/)*
