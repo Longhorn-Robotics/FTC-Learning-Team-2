@@ -16,7 +16,7 @@
 - [x] Task: Implement return-to-lane-start logic using blind reckoning. [223a7a4]
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Collection Logic' (Protocol in workflow.md)
 
-## Phase 4: Scoring and End-Game
+## Phase 4: Scoring and End-Game [checkpoint: 30fc248]
 - [x] Task: Implement AprilTag alignment and launch sequence (placeholders for manual code). [5f634eb]
 - [x] Task: Implement timer monitoring and the "Safe Zone" exit strategy. [5f634eb]
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: Scoring and End-Game' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 4: Scoring and End-Game' (Protocol in workflow.md)
