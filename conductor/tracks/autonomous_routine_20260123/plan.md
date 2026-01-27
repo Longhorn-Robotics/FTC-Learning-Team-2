@@ -6,7 +6,7 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Scaffolding and Setup' (Protocol in workflow.md)
 
 ## Phase 2: Hybrid Navigation Foundation
-- [ ] Task: Implement `driveToTagHybrid` logic for visual tracking with encoder/IMU fallback.
+- [x] Task: Implement `driveToTagHybrid` logic for visual tracking with encoder/IMU fallback. [799d5c9]
 - [ ] Task: Implement `turnToHeading` with IMU normalization (-180 to 180).
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Hybrid Navigation Foundation' (Protocol in workflow.md)
 
