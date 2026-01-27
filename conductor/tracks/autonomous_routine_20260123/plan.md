@@ -5,10 +5,10 @@
 - [x] Task: Implement comprehensive telemetry helper for real-time sensor/state monitoring. [4756803]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Scaffolding and Setup' (Protocol in workflow.md)
 
-## Phase 2: Hybrid Navigation Foundation
+## Phase 2: Hybrid Navigation Foundation [checkpoint: b98e069]
 - [x] Task: Implement `driveToTagHybrid` logic for visual tracking with encoder/IMU fallback. [799d5c9]
 - [x] Task: Implement `turnToHeading` with IMU normalization (-180 to 180). [799d5c9]
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Hybrid Navigation Foundation' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Hybrid Navigation Foundation' (Protocol in workflow.md)
 
 ## Phase 3: Collection Logic
 - [ ] Task: Implement the "Lane Alignment" sequence to position the robot for row runs.
