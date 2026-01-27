@@ -17,6 +17,6 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Collection Logic' (Protocol in workflow.md)
 
 ## Phase 4: Scoring and End-Game
-- [ ] Task: Implement AprilTag alignment and launch sequence (placeholders for manual code).
-- [ ] Task: Implement timer monitoring and the "Safe Zone" exit strategy.
+- [x] Task: Implement AprilTag alignment and launch sequence (placeholders for manual code). [5f634eb]
+- [x] Task: Implement timer monitoring and the "Safe Zone" exit strategy. [5f634eb]
 - [ ] Task: Conductor - User Manual Verification 'Phase 4: Scoring and End-Game' (Protocol in workflow.md)
