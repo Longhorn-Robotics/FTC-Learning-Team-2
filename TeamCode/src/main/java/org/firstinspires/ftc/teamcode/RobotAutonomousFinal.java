@@ -42,12 +42,33 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private double lastKnownTagRange = 0;
     private double startEncoderPos = 0;
 
+    // --- FIELD GEOMETRY ---
+    // Distance from the AprilTag (diagonal) to reach the "Lane" start point.
+    private static final double LANE_ALIGNMENT_DISTANCE = 36.0; 
+    
+    // Y-Distances to reverse down the lane for each row.
+    private double[] rowDepths = {12.0, 36.0, 60.0, 84.0}; 
+
     // --- STATE MACHINE ---
     private enum State {
         INIT,
+        ALIGN_TO_TAG_START,
+        DRIVE_TO_LANE,
+        TURN_UP,
+        DRIVE_TO_ROW,
+        TURN_TO_BALLS,
+        COLLECT_BALLS,
+        REVERSE_FROM_BALLS,
+        TURN_UP_RETURN,
+        RETURN_TO_LANE_START,
+        TURN_TO_TAG,
+        DRIVE_TO_SCORE,
+        SCORE,
         DONE
     }
     private State currentState = State.INIT;
+    private int currentRow = 0;
+    private double currentLaneDepth = 0;
 
     @Override
     public void runOpMode() {
@@ -82,6 +103,10 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
         waitForStart();
 
+        if (opModeIsActive()) {
+            currentState = State.ALIGN_TO_TAG_START;
+        }
+
         while (opModeIsActive()) {
             // Update sensor data
             updateLocalization();
@@ -91,8 +116,113 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
             switch (currentState) {
                 case INIT:
-                    // Main logic will be added here
                     break;
+
+                case ALIGN_TO_TAG_START:
+                    // Step 1: Face the AprilTag (approx -45 deg for Top-Right corner)
+                    if (turnToHeading(-45)) {
+                        currentState = State.DRIVE_TO_LANE;
+                        resetRelativeEncoder();
+                    }
+                    break;
+
+                case DRIVE_TO_LANE:
+                    // Step 2: Drive to "Lane" start point (Hybrid: Visual or Blind)
+                    if (driveToTagHybrid(LANE_ALIGNMENT_DISTANCE, -45)) {
+                        currentState = State.TURN_UP;
+                    }
+                    break;
+
+                case TURN_UP:
+                    // Step 3: Turn to face Up (0 deg)
+                    if (turnToHeading(0)) {
+                        resetRelativeEncoder();
+                        currentLaneDepth = rowDepths[currentRow];
+                        currentState = State.DRIVE_TO_ROW;
+                    }
+                    break;
+
+                case DRIVE_TO_ROW:
+                    // Step 3 Cont: Reverse down the lane (Blind)
+                    if (driveStraight(-currentLaneDepth, 0)) {
+                        currentState = State.TURN_TO_BALLS;
+                    }
+                    break;
+
+                case TURN_TO_BALLS:
+                    // Step 4: Turn CW to face balls (-90 deg)
+                    if (turnToHeading(-90)) {
+                        resetRelativeEncoder();
+                        currentState = State.COLLECT_BALLS;
+                    }
+                    break;
+
+                case COLLECT_BALLS:
+                    // Step 4 Cont: Drive forward, intake on
+                    robot.runIntake(1.0);
+                    // Drive 24 inches or until collected (placeholder distance)
+                    // TODO: Implement sensor-based collection stop (color/limit switch)
+                    if (driveStraight(24.0, -90)) { 
+                        robot.runIntake(0);
+                        resetRelativeEncoder();
+                        currentState = State.REVERSE_FROM_BALLS;
+                    }
+                    break;
+
+                case REVERSE_FROM_BALLS:
+                    // Step 5: Reverse back to the lane point
+                    if (driveStraight(-24.0, -90)) {
+                        currentState = State.TURN_UP_RETURN;
+                    }
+                    break;
+
+                case TURN_UP_RETURN:
+                    // Step 5 Cont: Turn CCW back to Up (0 deg)
+                    if (turnToHeading(0)) {
+                        resetRelativeEncoder();
+                        currentState = State.RETURN_TO_LANE_START;
+                    }
+                    break;
+
+                case RETURN_TO_LANE_START:
+                    // Step 5 Cont: Return to the start of the lane (Tag Anchor)
+                    if (driveStraight(currentLaneDepth, 0)) {
+                        currentState = State.TURN_TO_TAG;
+                    }
+                    break;
+
+                case TURN_TO_TAG:
+                    // Step 6: Turn CW to face Tag (-45)
+                    // Hybrid turn: If tag seen, lock on? For now, just turn to heading.
+                    if (turnToHeading(-45)) {
+                        currentState = State.DRIVE_TO_SCORE;
+                    }
+                    break;
+
+                case DRIVE_TO_SCORE:
+                    // Drive closer to tag (e.g. 12 inches) to score
+                    if (driveToTagHybrid(12.0, -45)) {
+                         currentState = State.SCORE;
+                    }
+                    break;
+
+                case SCORE:
+                    robot.moveRobot(0,0);
+                    // Launch sequence placeholder
+                    robot.launchItems(1.0);
+                    if (getRuntime() > 2.0) { // Simple timer placeholder
+                         // Reset runtime logic needed or use separate timer
+                    }
+                    
+                    // Proceed to next row
+                    currentRow++;
+                    if (currentRow >= rowDepths.length) {
+                        currentState = State.DONE;
+                    } else {
+                        currentState = State.DRIVE_TO_LANE; 
+                    }
+                    break;
+
                 case DONE:
                     robot.moveRobot(0, 0);
                     break;
