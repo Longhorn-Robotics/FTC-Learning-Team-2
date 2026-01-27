@@ -103,6 +103,86 @@ public class RobotAutonomousFinal extends LinearOpMode {
         visionPortal.close();
     }
 
+    // --- TUNING CONSTANTS ---
+    private static final double MAX_SPEED = 0.5;
+    private static final double MAX_TURN = 0.4;
+    private static final double SPEED_GAIN = 0.04;
+    private static final double TURN_GAIN = 0.02;
+    private static final double HEADING_THRESHOLD = 2.0; // Degrees
+    private static final double DISTANCE_THRESHOLD = 1.0; // Inches
+
+    private boolean driveToTagHybrid(double targetDistance, double targetHeading) {
+        double rangeError;
+        double headingError;
+
+        if (tagVisible) {
+            // Visual Navigation
+            rangeError = lastTagRange - targetDistance;
+            headingError = lastTagBearing;
+            
+            // Update anchor for blind fallback
+            resetRelativeEncoder();
+            lastKnownTagRange = lastTagRange;
+        } else {
+            // Blind Fallback (Dead Reckoning)
+            // Estimated Range = Last Known Range - Distance Traveled Since Loss
+            double currentEncDist = getRelativeEncoderDistance();
+            double estimatedRange = lastKnownTagRange - currentEncDist;
+            
+            rangeError = estimatedRange - targetDistance;
+            headingError = targetHeading - getHeading();
+        }
+
+        if (Math.abs(rangeError) < DISTANCE_THRESHOLD) {
+            robot.moveRobot(0, 0);
+            return true;
+        }
+
+        double drive = com.qualcomm.robotcore.util.Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
+        double turn = com.qualcomm.robotcore.util.Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+
+        robot.moveRobot(drive - turn, drive + turn);
+        return false;
+    }
+
+    private boolean turnToHeading(double targetHeading) {
+        double headingError = targetHeading - getHeading();
+
+        // Normalize error to -180 to 180
+        while (headingError > 180) headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
+        if (Math.abs(headingError) < HEADING_THRESHOLD) {
+            robot.moveRobot(0, 0);
+            return true;
+        }
+
+        double turn = com.qualcomm.robotcore.util.Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+        robot.moveRobot(-turn, turn);
+        return false;
+    }
+
+    private boolean driveStraight(double inches, double targetHeading) {
+        double currentDist = getRelativeEncoderDistance();
+        double distError = inches - currentDist;
+        double headingError = targetHeading - getHeading();
+
+        // Normalize heading error
+        while (headingError > 180) headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
+        if (Math.abs(distError) < DISTANCE_THRESHOLD) {
+            robot.moveRobot(0, 0);
+            return true;
+        }
+
+        double drive = com.qualcomm.robotcore.util.Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
+        double turn = com.qualcomm.robotcore.util.Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+
+        robot.moveRobot(drive - turn, drive + turn);
+        return false;
+    }
+
     private void updateLocalization() {
         java.util.List<org.firstinspires.ftc.vision.apriltag.AprilTagDetection> detections = aprilTag.getDetections();
         tagVisible = false;
