@@ -59,8 +59,10 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private double headingOffset = 0; // Absolute field calibration
 
     // --- FIELD GEOMETRY ---
-    private static final double LANE_ALIGNMENT_DISTANCE = 36.0; 
-    private double[] rowDepths = {12.0, 36.0, 60.0, 84.0}; 
+    private static final double LANE_ALIGNMENT_DISTANCE = 36.0;
+    private static final double ARTIFACT_ROW_DEPTH = 12.0;
+    //Changing to negative should hopefully make it drive in reverse
+    private double[] rowDepths = {-12.0, -36.0, -60.0, -84.0};
 
     // --- STATE MACHINE ---
     private enum State {
@@ -193,7 +195,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
             case COLLECT_BALLS:
                 robot.runIntake(1.0);
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth + 24.0, -90)) { 
+                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth + ARTIFACT_ROW_DEPTH, -90)) {
                     robot.runIntake(0);
                     currentState = State.REVERSE_FROM_BALLS;
                 }
