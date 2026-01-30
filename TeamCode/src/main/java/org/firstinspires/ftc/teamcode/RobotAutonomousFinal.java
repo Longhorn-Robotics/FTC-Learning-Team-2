@@ -60,7 +60,8 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
     // --- FIELD GEOMETRY ---
     private static final double LANE_ALIGNMENT_DISTANCE = 36.0;
-    private static final double ARTIFACT_ROW_DEPTH = 51.0;
+    //should be about 51 inches ^^
+    private static final double ARTIFACT_ROW_DEPTH = 15.0;
     //Changing to negative should hopefully make it drive in reverse
     private double[] rowDepths = {-12.0, -36.0, -60.0, -84.0};
 
