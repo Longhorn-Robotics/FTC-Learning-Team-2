@@ -58,8 +58,10 @@ public class RobotTeleOp2 extends OpMode {
     private boolean isCalibrated = false;
 
     // --- DRIVER INPUTS ---
-    double lStickY, rStickY;
-    boolean rBumper, lBumper;
+    double LStickY;
+    double RStickY;
+    boolean RBumper = false;
+    boolean LBumper = false;
 
     @Override
     public void init() {
@@ -95,13 +97,13 @@ public class RobotTeleOp2 extends OpMode {
         updateLocalization();
 
         // 2. Read Inputs
-        lStickY = -gamepad1.left_stick_y; // Invert stick for standard logic
-        rStickY = -gamepad1.right_stick_y;
-        rBumper = gamepad1.right_bumper;
-        lBumper = gamepad1.left_bumper;
+        LStickY = -this.gamepad1.left_stick_y;
+        RStickY = this.gamepad1.right_stick_y;
+        RBumper = this.gamepad1.right_bumper;
+        LBumper = this.gamepad1.left_bumper;
 
         // 3. Control Logic
-        if (lBumper) {
+        if (LBumper) {
             // --- AUTO-ALIGN TO LAUNCHER ---
             telemetry.addData("Mode", "AUTO-ALIGNING");
             
@@ -125,15 +127,11 @@ public class RobotTeleOp2 extends OpMode {
                 isCalibrated = true;
             }
 
-            // Standard Tank Drive
-            // Using the same mixer logic: Left = Y - Turn? 
-            // In TeleOp, typically Left Stick Y = Left Motor, Right Stick Y = Right Motor
-            // or Left Stick Y = Forward, Right Stick X = Turn.
-            // Your RobotTeleOp.java used pure tank (LStickY, RStickY).
-            robot.moveRobot(lStickY, rStickY);
+            // Standard Tank Drive (Using raw stick values)
+            robot.moveRobot(LStickY, RStickY);
             
             // Intake/Launcher logic from RobotTeleOp.java
-            if (!rBumper) {
+            if (!RBumper) {
                 robot.idleLauncher(0);
             } else {
                 robot.launchItems(1);

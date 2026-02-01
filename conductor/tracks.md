@@ -11,3 +11,8 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 - [x] **Track: Assume the AprilTag is in view at the start of the match for alignment.**
   *Link: [./tracks/debug_initial_tag_assumption/](./tracks/debug_initial_tag_assumption/)*
+
+---
+
+- [~] **Track: Implement Field-Centric Localization System using XY coordinates and IMU heading.**
+  *Link: [./tracks/field_centric_localization_20260123/](./tracks/field_centric_localization_20260123/)*

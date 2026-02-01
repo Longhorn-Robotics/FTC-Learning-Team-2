@@ -81,7 +81,7 @@ public class RobotTeleOp extends OpMode{
     public void loop() {
         //read controller data
         LStickY = -this.gamepad1.left_stick_y;
-        RStickY = -this.gamepad1.right_stick_y;
+        RStickY = this.gamepad1.right_stick_y;
         RBumper = this.gamepad1.right_bumper;
         LBumper = this.gamepad1.left_bumper;
 

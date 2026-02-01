@@ -30,16 +30,14 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private AprilTagProcessor aprilTag;
 
     // --- CONSTANTS ---
-    // Calculated: 537.7 (goBILDA 19.2:1) / (96mm wheel circ in inches) = 45.28
     private static final double COUNTS_PER_INCH = 45.28;
     
-    // Camera Intrinsics (Logitech C270)
     private static final double FX = 357.1;
     private static final double FY = 357.1;
     private static final double CX = 159.5;
     private static final double CY = 119.5;
 
-    // --- TUNING CONSTANTS (Proportional Gains) ---
+    // --- TUNING CONSTANTS ---
     private static final double MAX_SPEED = 0.4; 
     private static final double MAX_TURN = 0.25; 
     private static final double SPEED_GAIN = 0.03;
@@ -47,7 +45,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private static final double HEADING_THRESHOLD = 1.5; 
     private static final double DISTANCE_THRESHOLD = 1.0; 
 
-    // Field angle of the corner AprilTag (Top-Right corner faces South-West = -45 degrees)
+    // Field angle of the corner AprilTag (Top-Right = -45 degrees)
     private static final double TAG_FIELD_ANGLE = -45.0;
 
     // --- LOCALIZATION MEMORY ---
@@ -56,13 +54,11 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private double lastTagBearing = 0;
     private double lastKnownTagRange = 0;
     private double startEncoderPos = 0;
-    private double headingOffset = 0; // Absolute field calibration
+    private double headingOffset = 0; 
 
     // --- FIELD GEOMETRY ---
     private static final double LANE_ALIGNMENT_DISTANCE = 36.0;
-    //should be about 51 inches ^^
     private static final double ARTIFACT_ROW_DEPTH = 15.0;
-    //Changing to negative should hopefully make it drive in reverse
     private double[] rowDepths = {-12.0, -36.0, -60.0, -84.0};
 
     // --- STATE MACHINE ---
@@ -88,7 +84,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // 1. Initialize Hardware
         robot.AutoInit(hardwareMap);
 
         leftEncoder = hardwareMap.get(DcMotor.class, "ld");
@@ -105,7 +100,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
 
-        // 2. Initialize Vision
         initVision();
 
         telemetry.addData("Status", "Initialized - READY");
@@ -116,8 +110,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
         ElapsedTime autoTimer = new ElapsedTime();
         autoTimer.reset();
 
-        // --- INITIAL HEADING CALIBRATION ---
-        // Lock IMU 0 to Field Up by looking at the corner tag
         ElapsedTime visionTimeout = new ElapsedTime();
         while (opModeIsActive() && !tagVisible && visionTimeout.seconds() < 4.0) {
             updateLocalization();
@@ -126,7 +118,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
         }
 
         if (tagVisible) {
-            // RobotHeading = TagFieldAngle - TagBearing
             headingOffset = (TAG_FIELD_ANGLE - lastTagBearing) - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
             lastKnownTagRange = lastTagRange;
             telemetry.addData("Status", "Calibrated! Offset: %.1f", headingOffset);
@@ -144,7 +135,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
         while (opModeIsActive()) {
             updateLocalization();
             
-            // --- END GAME SAFETY CHECK ---
             if (autoTimer.seconds() > 25.0 && currentState != State.DONE) {
                 if (performNavigationStep(60.0, 0)) currentState = State.DONE;
             } else {
@@ -252,10 +242,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
         }
     }
 
-    /**
-     * Unified Hybrid Navigation
-     * Uses baseline from RobotAutonomous.java: RangeError = Current - Target
-     */
     private boolean performNavigationStep(double targetRangeFromTag, double targetFieldHeading) {
         double rangeError;
         double headingError;
@@ -263,7 +249,9 @@ public class RobotAutonomousFinal extends LinearOpMode {
         if (tagVisible) {
             rangeError = lastTagRange - targetRangeFromTag;
             
-            // If the state is meant to face the corner, use Vision Bearing.
+            // Decoupled Heading Logic:
+            // Use Vision Bearing ONLY if we are facing the tag (approx 45 deg field angle)
+            // Otherwise, strictly use the IMU to avoid the "spiral" effect.
             if (Math.abs(targetFieldHeading - TAG_FIELD_ANGLE) < 10) {
                 headingError = lastTagBearing;
             } else {
@@ -273,18 +261,15 @@ public class RobotAutonomousFinal extends LinearOpMode {
             resetRelativeEncoder();
             lastKnownTagRange = lastTagRange;
         } else {
-            // Sensor Fallback (Dead Reckoning)
             double currentEncDist = getRelativeEncoderDistance();
             double estimatedRange = lastKnownTagRange - currentEncDist;
             rangeError = estimatedRange - targetRangeFromTag;
             headingError = targetFieldHeading - getHeading();
         }
 
-        // Normalize angle to -180 to 180
         while (headingError > 180) headingError -= 360;
         while (headingError <= -180) headingError += 360;
 
-        // Apply gains
         double drive = Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
         double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
 
@@ -297,10 +282,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
         return false;
     }
 
-    /**
-     * Tank Drive Mixer
-     * Corrected signs: Positive yaw results in CCW turn to match IMU.
-     */
     private void moveRobot(double x, double yaw) {
         double leftPower    = x + yaw;
         double rightPower   = x - yaw;
@@ -329,14 +310,13 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private void updateTelemetry() {
         telemetry.addData("STATE", currentState);
         telemetry.addData("Tag", tagVisible ? "VISIBLE" : "LOST");
-        telemetry.addData("Field Heading", "%.1f°", getHeading());
-        telemetry.addData("Enc Dist", "%.1f\"", getRelativeEncoderDistance());
+        telemetry.addData("Heading", "%.1f°", getHeading());
+        telemetry.addData("Range", "%.1f\"", (tagVisible ? lastTagRange : (lastKnownTagRange - getRelativeEncoderDistance())));
         telemetry.update();
     }
 
     private double getHeading() {
-        double rawYaw = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-        return rawYaw + headingOffset;
+        return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + headingOffset;
     }
 
     private void resetRelativeEncoder() {
