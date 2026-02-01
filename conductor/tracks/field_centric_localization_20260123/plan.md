@@ -3,7 +3,7 @@
 ## Phase 1: Coordinate System & Math
 - [x] Task: Implement `Pose` class (or structure) to hold `(x, y, heading)`. [c8a2b0d]
 - [x] Task: Implement `getGroundDistance(tagRange)` logic to account for the 25" tag height. [91f12bc]
-- [ ] Task: Implement coordinate transformation logic to convert "Relative Tag 24" and "Relative Tag 20" observations into absolute Field Coordinates.
+- [x] Task: Implement coordinate transformation logic to convert "Relative Tag 24" and "Relative Tag 20" observations into absolute Field Coordinates. [7ff690e]
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Coordinate System & Math' (Protocol in workflow.md)
 
 ## Phase 2: Sensor Integration
