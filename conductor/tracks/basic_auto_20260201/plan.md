@@ -1,7 +1,7 @@
 # Implementation Plan: Basic Autonomous Routine
 
 ## Phase 1: Foundation & Tuning
-- [ ] Task: Create PedroPathing configuration class
+- [~] Task: Create PedroPathing configuration class
     - [ ] Define `@Config` parameters for tank drive PID, speed, and acceleration.
     - [ ] Initialize PedroPathing with `RobotHardware` constants.
 - [ ] Task: Create `BasicAutoOpMode` skeleton

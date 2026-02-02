@@ -1,11 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="org.firstinspires.ftc.teamcode">
 
-<!-- Note: the actual manifest file used in your APK merges this file with contributions
-     from the modules on which your app depends (such as FtcRobotController, etc).
-     So it won't ultimately be as empty as it might here appear to be :-) -->
+    <uses-sdk
+        tools:overrideLibrary="com.pedropathing.ftc, com.pedropathing.telemetry, com.bylazar.fullpanels" />
 
-<!-- The package name here determines the package for your R class and your BuildConfig class -->
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android">
-    <application/>
+    <application
+        tools:replace="android:allowBackup"
+        android:allowBackup="false">
+
+        <activity
+            android:name="org.firstinspires.ftc.robotcontroller.internal.PermissionValidatorWrapper"
+            android:exported="true"
+            tools:replace="android:exported" />
+
+        <activity
+            android:name="org.firstinspires.ftc.robotcontroller.internal.FtcRobotControllerActivity"
+            android:exported="true"
+            tools:replace="android:exported" />
+
+    </application>
 </manifest>

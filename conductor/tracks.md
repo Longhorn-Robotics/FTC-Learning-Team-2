@@ -4,5 +4,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [ ] **Track: Implement basic autonomous routine using PedroPathing**
+- [~] **Track: Implement basic autonomous routine using PedroPathing**
   *Link: [./tracks/basic_auto_20260201/](./tracks/basic_auto_20260201/)*
