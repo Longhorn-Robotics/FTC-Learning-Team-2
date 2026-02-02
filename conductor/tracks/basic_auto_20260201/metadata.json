@@ -1,0 +1,8 @@
+{
+  "track_id": "basic_auto_20260201",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-01T18:50:00Z",
+  "updated_at": "2026-02-01T18:50:00Z",
+  "description": "Implement a basic autonomous routine using PedroPathing to score two balls in the designated area."
+}
