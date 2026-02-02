@@ -1,10 +1,10 @@
 # Implementation Plan: Field-Centric Localization
 
-## Phase 1: Coordinate System & Math
+## Phase 1: Coordinate System & Math [checkpoint: c751fef]
 - [x] Task: Implement `Pose` class (or structure) to hold `(x, y, heading)`. [c8a2b0d]
 - [x] Task: Implement `getGroundDistance(tagRange)` logic to account for the 25" tag height. [91f12bc]
 - [x] Task: Implement coordinate transformation logic to convert "Relative Tag 24" and "Relative Tag 20" observations into absolute Field Coordinates. [7ff690e]
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Coordinate System & Math' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Coordinate System & Math' (Protocol in workflow.md)
 
 ## Phase 2: Sensor Integration
 - [ ] Task: Update `RobotAutonomousFinal` to initialize pose using the first visual detection.
