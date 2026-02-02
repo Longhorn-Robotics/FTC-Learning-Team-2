@@ -39,8 +39,13 @@ public class ConceptLocalizationTest extends OpMode {
     private static final double CY = 119.5;
 
     // --- STATE ---
-    private Pose currentPose = new Pose(0, 0, 0);
+    private Pose currentPose = new Pose(0, 0, 0); // Start at (0,0,0) assumption
+    private Pose lastAnchorPose = new Pose(0, 0, 0); // The last position confirmed by Vision
+    private double lastAnchorEncoder = 0; // Encoder average at the moment of last visual lock
     private boolean tagVisible = false;
+    
+    private double headingOffset = 0; // Calibration offset for IMU
+    private static final double COUNTS_PER_INCH = 45.28; // From RobotAutonomousFinal
 
     @Override
     public void init() {
@@ -51,11 +56,16 @@ public class ConceptLocalizationTest extends OpMode {
         rightEncoder = hardwareMap.get(DcMotor.class, "rd");
         leftEncoder.setDirection(DcMotor.Direction.REVERSE);
         rightEncoder.setDirection(DcMotor.Direction.FORWARD);
+        
+        leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // Use RUN_WITHOUT for manual teleop feel, just read position
+        rightEncoder.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         // IMU
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
                 RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
         imu.resetYaw();
 
@@ -74,59 +84,100 @@ public class ConceptLocalizationTest extends OpMode {
         robot.moveRobot(leftY, rightY);
 
         // 2. Localization Update
-        updatePoseFromVision();
+        updateHybridPose();
 
         // 3. Telemetry Dashboard
         telemetry.addData("--- FIELD LOCALIZATION ---", "");
-        telemetry.addData("Tag Visible", tagVisible ? "YES" : "NO");
+        telemetry.addData("Source", tagVisible ? "VISION (Absolute)" : "DEAD RECKONING (Estimated)");
+        telemetry.addData("Field X", "%.1f\"", currentPose.x);
+        telemetry.addData("Field Y", "%.1f\"", currentPose.y);
+        telemetry.addData("Heading", "%.1f°", currentPose.heading);
         
-        if (tagVisible) {
-            telemetry.addData("Field X", "%.1f inches", currentPose.x);
-            telemetry.addData("Field Y", "%.1f inches", currentPose.y);
-            telemetry.addData("Heading", "%.1f degrees", currentPose.heading);
-            telemetry.addData("Distance to Center", "%.1f inches", 
-                Math.hypot(currentPose.x, currentPose.y)); // Approx 0,0 is center? No, 0,0 is usually corner in FTC.
-                                                           // Actually, spec says Tag 24 is (55.5, 55.5). Center is (0,0)?
-                                                           // Let's check LocalizationUtils constants.
-                                                           // LocalizationUtils: Tag is at (55.5, 55.5).
-                                                           // Center of field is typically (0,0) in standard FTC coordinates.
-        } else {
-            telemetry.addData("Status", "Searching for AprilTag...");
-            telemetry.addData("Last Known", currentPose.toString());
-        }
+        telemetry.addData("--- TARGETS ---", "");
+        telemetry.addData("Red Tag (24)", "45.0°");
+        telemetry.addData("Blue Tag (20)", "315.0°");
         
         telemetry.addData("--- RAW SENSORS ---", "");
-        telemetry.addData("IMU Yaw", "%.1f", imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        telemetry.addData("Enc Dist", "%.1f\"", getAvgEncoderDistance());
+        telemetry.addData("IMU Yaw", "%.1f°", getRawHeading());
         telemetry.update();
     }
 
-    private void updatePoseFromVision() {
+    private void updateHybridPose() {
         List<AprilTagDetection> detections = aprilTag.getDetections();
-        tagVisible = false;
-        
+        AprilTagDetection validDetection = null;
+
+        // Find a relevant tag
         for (AprilTagDetection detection : detections) {
-            if (detection.metadata != null) {
-                // Get current absolute heading from IMU
-                // Note: We are trusting the IMU for orientation relative to the field.
-                // If IMU 0 is "Up/North", and we are facing the Tag (North-East), Yaw should be -45?
-                // For this test, we assume IMU 0 is aligned with Field 0 (Goal Wall).
-                double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-                
-                // Calculate Pose
-                Pose detectedPose = LocalizationUtils.calculateFieldPose(
-                        detection.id,
-                        detection.ftcPose.range,
-                        detection.ftcPose.bearing,
-                        heading
-                );
-                
-                if (detectedPose != null) {
-                    currentPose = detectedPose;
-                    tagVisible = true;
-                    break; // Use the first valid tag
-                }
+            if (detection.metadata != null && 
+               (detection.id == LocalizationUtils.RED_TAG_ID || detection.id == LocalizationUtils.BLUE_TAG_ID)) {
+                validDetection = detection;
+                break;
             }
         }
+
+        double currentRawHeading = getRawHeading();
+
+        if (validDetection != null) {
+            // --- VISION VISIBLE: RESET ANCHOR ---
+            tagVisible = true;
+            
+            // 1. Calculate Absolute Heading based on Tag
+            // If looking at Red Tag (45 deg field location), Robot Heading = 45 - Tag Bearing?
+            // Spec: Tag 24 is at Top Right. If we face it, we are facing 45 deg?
+            // Let's assume the user wants 45 deg to be the bearing TO the tag.
+            // But 'heading' is the robot's orientation.
+            // Using LocalizationUtils logic:
+            // We assume robotHeading + bearing = angle_to_tag.
+            
+            // For calibration test: 
+            // We trust the IMU's relative changes, but snap absolute value if we see a known tag?
+            // Let's keep it simple: Use LocalizationUtils to get Pose based on current IMU.
+            
+            double calibratedHeading = currentRawHeading + headingOffset;
+            
+            currentPose = LocalizationUtils.calculateFieldPose(
+                    validDetection.id,
+                    validDetection.ftcPose.range,
+                    validDetection.ftcPose.bearing,
+                    calibratedHeading
+            );
+            
+            // Update Anchors for Dead Reckoning
+            if (currentPose != null) {
+                lastAnchorPose = new Pose(currentPose.x, currentPose.y, currentPose.heading);
+                lastAnchorEncoder = getAvgEncoderDistance();
+            }
+        } else {
+            // --- VISION LOST: DEAD RECKONING ---
+            tagVisible = false;
+            
+            double currentEncoder = getAvgEncoderDistance();
+            double distanceDelta = currentEncoder - lastAnchorEncoder;
+            double currentHeading = currentRawHeading + headingOffset;
+            
+            // Calculate change in position based on heading
+            // Note: This is a simple linear approximation (Arc motion would be better but this is sufficient for fallback)
+            // X += d * sin(theta)
+            // Y += d * cos(theta)
+            double theta = Math.toRadians(currentHeading);
+            double deltaX = distanceDelta * Math.sin(theta);
+            double deltaY = distanceDelta * Math.cos(theta);
+            
+            currentPose = new Pose(
+                lastAnchorPose.x + deltaX,
+                lastAnchorPose.y + deltaY,
+                currentHeading
+            );
+        }
+    }
+
+    private double getAvgEncoderDistance() {
+        return ((leftEncoder.getCurrentPosition() + rightEncoder.getCurrentPosition()) / 2.0) / COUNTS_PER_INCH;
+    }
+    
+    private double getRawHeading() {
+        return imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
     }
 
     private void initVision() {
