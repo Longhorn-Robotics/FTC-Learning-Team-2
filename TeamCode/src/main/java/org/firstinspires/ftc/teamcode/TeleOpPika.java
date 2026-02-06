@@ -2,6 +2,8 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+
 import android.media.MediaPlayer;
 import android.util.Size;
 
@@ -14,6 +16,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import android.content.Context;
 
 
 
@@ -27,15 +30,28 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 
 public class TeleOpPika extends LinearOpMode {
+    //Context context = hardwareMap.appContext;
+//    public MediaPlayer girl;
+//
+//
+//    public MediaPlayer happy;
+//
+//    public MediaPlayer thunderbolt;
+//
+//    public MediaPlayer scream;
+
     private int stall;
     //Get functions to move the robot
     RobotHardware robot = new RobotHardware();
 
 
-    private MediaPlayer girl;
-    private MediaPlayer happy;
-    private MediaPlayer thunderbolt;
-    private MediaPlayer scream;
+//    private MediaPlayer girl;
+//    private MediaPlayer happy;
+//    private MediaPlayer thunderbolt;
+//    private MediaPlayer scream;
+
+
+
 
 
     //set up our camera (for driving automatically driving to the AprilTag)
@@ -65,19 +81,21 @@ public class TeleOpPika extends LinearOpMode {
     //init our hardware
     @Override
     public void runOpMode() {
-
-
-        girl = MediaPlayer.create(hardwareMap.appContext, R.raw.pg);
-        girl.setLooping(false);
-        happy = MediaPlayer.create(hardwareMap.appContext, R.raw.ph);
-        happy.setLooping(false);
-        thunderbolt = MediaPlayer.create(hardwareMap.appContext, R.raw.pt);
-        thunderbolt.setLooping(false);
-        scream = MediaPlayer.create(hardwareMap.appContext, R.raw.ps);
+         robot.init(hardwareMap);
+        MediaPlayer girl = MediaPlayer.create(hardwareMap.appContext, R.raw.pg);
+        MediaPlayer happy = MediaPlayer.create(hardwareMap.appContext, R.raw.ph);
+        MediaPlayer thunderbolt = MediaPlayer.create(hardwareMap.appContext, R.raw.pt);
+        MediaPlayer scream = MediaPlayer.create(hardwareMap.appContext, R.raw.maxverstappan);
         scream.setLooping(false);
+//        happy.setLooping(false);
+//        thunderbolt.setLooping(false);
+//        girl.setLooping(false);
 
 
-        robot.init(hardwareMap);
+
+
+
+
         //maxverstappan.start();
         telemetry.addData("Status", "Initialized");
         telemetry.update();
