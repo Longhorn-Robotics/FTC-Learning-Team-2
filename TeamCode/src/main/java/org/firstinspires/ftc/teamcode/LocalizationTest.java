@@ -17,6 +17,10 @@ public class LocalizationTest extends LinearOpMode {
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTag;
     private IMU imu;
+    private static final double FX = 357.1;
+    private static final double FY = 357.1;
+    private static final double CX = 159.5;
+    private static final double CY = 119.5;
 
     @Override
     public void runOpMode() {
@@ -24,10 +28,12 @@ public class LocalizationTest extends LinearOpMode {
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
+                RevHubOrientationOnRobot.UsbFacingDirection.LEFT)));
 
         // Initialize AprilTag
-        aprilTag = new AprilTagProcessor.Builder().build();
+        aprilTag = new AprilTagProcessor.Builder()
+                .setLensIntrinsics(FX, FY, CX, CY)
+                .build();
         visionPortal = new VisionPortal.Builder()
                 .addProcessor(aprilTag)
                 .setCameraResolution(new Size(320, 240))

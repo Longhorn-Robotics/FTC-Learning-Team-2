@@ -1,21 +1,23 @@
-# Product Definition - FTC Robot Controller (DECODE 2025-2026)
+# Product Definition
 
 ## Initial Concept
-A high scoring good autonomous using PedroPathing. We have tank drive wheels (and sepcifications about them in the code), encoders, and the IMU on our expansion hub. We can only store two balls at a time.
-
-## Target Audience
-- **The Team:** Primary developers and operators of the robot, focusing on a balance of technical maintenance and high-performance competitive play.
-
-## Goals
-- **High-Scoring Autonomous:** Deliver a competitive edge during the autonomous period using advanced pathing and blind/encoder-based detection.
-- **Efficient Scoring:** Optimize the cycle time for scoring the 2-ball maximum storage capacity.
-- **Robust Localization:** Maintain accurate positioning using a combination of encoders and the Expansion Hub IMU.
+**Goal:** Develop a robust and precise autonomous routine for the DECODE (2025-2026) FTC season using the Android-based Control Hub. The system prioritizes computer vision (AprilTags) for absolute localization and alignment, seamlessly falling back to dead-reckoning (IMU/Encoders) during known periods of visual occlusion. The routine focuses on reliably collecting and scoring balls from field rows while strictly adhering to the 2-ball storage limit and ensuring the robot exits the launch zone before the autonomous period ends.
 
 ## Core Features
-- **PedroPathing Implementation:** Advanced path following specifically tuned for a tank drive chassis.
-- **Tank Drive Optimization:** Custom motion profiles and specifications tailored to the team's drive wheel and encoder setup.
-- **Expansion Hub IMU Integration:** Real-time heading correction and stabilization.
-- **State Machine Control:** Manage the scoring sequences and ball handling logic efficiently.
+- **Hybrid Localization System:**
+    - **Primary:** AprilTag detection for absolute positioning and heading correction relative to the 45-degree target hoop.
+    - **Secondary (Fallback):** IMU and Encoder-based dead-reckoning for navigation during known blind spots (e.g., reversing down the lane, returning to the start).
+- **Intelligent Ball Collection:**
+    - Navigate to specific rows (12", 36", 60", 84" depths) using precise distance tracking.
+    - Utilize an active intake to collect balls while maintaining correct heading.
+    - **Constraint:** Strictly manage a 2-ball capacity, necessitating frequent returns to the scoring zone.
+- **Precision Scoring:**
+    - Auto-align with the target AprilTag from the designated scoring zone.
+    - Launch mechanisms (placeholder code) trigger only when alignment is confirmed.
+- **Safety & Compliance:**
+    - Ensure the robot is outside the launch zone at the end of the 30-second autonomous period to avoid penalties.
 
-## Configuration & Maintenance
-- **Dashboard Integration:** Use a `Config` class with `public static` fields for real-time tuning via FTC Dashboard.
+## Strategy: Precision-Focused
+- Prioritize clearing rows with high accuracy rather than speed.
+- Execute a reliable "cycle" pattern: Align -> Navigate to Row -> Collect (Max 2) -> Return -> Re-align -> Score.
+- Abort/Exit logic to vacate the launch zone before T-0.

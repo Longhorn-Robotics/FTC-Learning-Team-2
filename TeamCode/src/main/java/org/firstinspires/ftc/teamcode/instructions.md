@@ -14,9 +14,9 @@ Note: When I say it goes left, rught, up, or down, that means from a top down pe
 1. Using the camera, the robot must make sure it is properly aligned with the AprilTag
 2. The robot must go backwards/forwards until it is at a point such that if it went down the court for some X distance, it would be right next to the first ball row
 3. The robot must turn so it is facing upwards and reverse until it reaches the first ball row. You must use the AprilTag as an anchor to make sure you are going the right way, but keep in mind that the AprilTag is at a 45 degree angle, so the code must be able take this into account (as it is going paralel to the wall)
-4. Once the robot is next to the ball row, the robot will turn CW until it is facing the ball row. We will use use the IMU/Encoders to make sur eit is facing the right direction, and we can also use the Camera to detect the balls for percision, bu tkeep in mind there were lilely be people snd object outside of the court with simialr colors, so we don't want it to drive there, which is why the IMU/Encoders can make sure it is in roughly the right direction while the camera is only for percsison. The robot wil lgo forward for some X Distacne to pick up the balls, as we have an active intake.
+4. Once the robot is next to the ball row, the robot will turn CW until it is facing the ball row. We will use use the IMU/Encoders to make sur eit is facing the right direction, The robot wil lgo forward for some X Distacne to pick up the balls, as we have an active intake.
 5. Once the robot collects the ball row, it wil reverse until it is at the pont where it originally tuned CW to pick up the balls. The robot will turn CCW and use the AprilTag as an ahcor to return to the launch zone.
-6. The robot will turn CW until it is facing the AprilTag
-
+6. The robot will turn CW until it is facing the AprilTag.
+7. The robot will rpeat this cycle, collecting artifacts of varying row depths until 25 seconds have passed since the robot has started, then, it must amke sure it is not in the launch zone any logner.
 IMPORTANT:
 For Steps 3 and 5, and 6, it is very likely the robot will lose sigt of the AprilTag. When this happens, the robot must remember it's lcation/heading/distacne or whatever so it can drive purely on the IMU and encoders UNTIL it sees the AprilTag again.

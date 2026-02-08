@@ -1,23 +1,26 @@
-# General Code Style Principles
+# Java Code Style Guide (FTC/Android Studio)
 
-This document outlines general coding principles that apply across all languages and frameworks used in this project.
+## Naming Conventions
+- **Classes:** PascalCase (e.g., `RobotAutonomous`, `HardwareMap`).
+- **Methods:** camelCase (e.g., `runOpMode`, `driveToTag`).
+- **Variables:** camelCase (e.g., `leftMotor`, `targetDistance`).
+- **Constants:** UPPER_SNAKE_CASE (e.g., `MAX_SPEED`, `COUNTS_PER_INCH`).
 
-## Readability
-- Code should be easy to read and understand by humans.
-- Avoid overly clever or obscure constructs.
+## Formatting
+- **Indentation:** 4 spaces (standard Android Studio default).
+- **Braces:** K&R style (opening brace on the same line).
+- **Imports:** Explicit imports preferred over wildcards (`*`).
 
-## Consistency
-- Follow existing patterns in the codebase.
-- Maintain consistent formatting, naming, and structure.
+## Best Practices
+- **Hardware Access:** Use the `hardwareMap` to retrieve devices in the `init` phase, never in the loop.
+- **Safety:** Always verify objects (like `AprilTagDetection.metadata`) are not null before accessing their properties.
+- **Telemetry:** Use `telemetry.addData()` followed by `telemetry.update()` to persist data to the Driver Station.
+- **OpMode Structure:**
+    - Use `@Autonomous` or `@TeleOp` annotations to register OpModes.
+    - Extend `LinearOpMode` for sequential logic (preferred for autonomous).
+    - Ensure `waitForStart()` is called before the main loop.
+    - Check `opModeIsActive()` in all loops.
 
-## Simplicity
-- Prefer simple solutions over complex ones.
-- Break down complex problems into smaller, manageable parts.
-
-## Maintainability
-- Write code that is easy to modify and extend.
-- Minimize dependencies and coupling.
-
-## Documentation
-- Document *why* something is done, not just *what*.
-- Keep documentation up-to-date with code changes.
+## Comments
+- Use Javadoc (`/** ... */`) for class and method descriptions.
+- Use inline comments (`//`) for explaining complex logic or "why" a decision was made.

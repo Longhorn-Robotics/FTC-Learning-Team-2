@@ -8,7 +8,7 @@
 
 ## Phase 2: Sensor Integration
 - [x] Task: Create `ConceptLocalizationTest.java` to visualize and verify field coordinates in TeleOp. [efdfaef]
-- [ ] Task: Update `RobotAutonomousFinal` to initialize pose using the first visual detection.
+- [x] Task: Update `RobotAutonomousFinal` to initialize pose using the first visual detection. [a0052ff]
 - [ ] Task: Implement `updatePose()` method that merges Encoder/IMU deltas into the global pose.
 - [ ] Task: Implement visual correction logic: When a tag is seen, override the "Dead Reckoning" pose with the "Visual" pose.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Sensor Integration' (Protocol in workflow.md)
