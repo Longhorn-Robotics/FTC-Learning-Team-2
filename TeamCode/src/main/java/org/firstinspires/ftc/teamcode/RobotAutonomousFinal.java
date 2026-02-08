@@ -163,7 +163,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
             updateLocalization();
             
             if (autoTimer.seconds() > 25.0 && currentState != State.DONE) {
-                if (performNavigationStep(60.0, 0)) currentState = State.DONE;
+                if (driveStraight(60.0, 0)) currentState = State.DONE;
             } else {
                 executeStateMachine();
             }
@@ -179,19 +179,19 @@ public class RobotAutonomousFinal extends LinearOpMode {
                 break;
 
             case ALIGN_TO_TAG_START:
-                if (performNavigationStep(lastKnownTagRange, -45)) {
+                if (turnTo(-45)) {
                     currentState = State.DRIVE_TO_LANE;
                 }
                 break;
 
             case DRIVE_TO_LANE:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, -45)) {
+                if (driveStraight(LANE_ALIGNMENT_DISTANCE, -45)) {
                     currentState = State.TURN_UP;
                 }
                 break;
 
             case TURN_UP:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, 0)) {
+                if (turnTo(0)) {
                     currentLaneDepth = rowDepths[currentRow];
                     resetRelativeEncoder();
                     currentState = State.DRIVE_TO_ROW;
@@ -199,13 +199,13 @@ public class RobotAutonomousFinal extends LinearOpMode {
                 break;
 
             case DRIVE_TO_ROW:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, 0)) {
+                if (driveStraight(currentLaneDepth, 0)) {
                     currentState = State.TURN_TO_BALLS;
                 }
                 break;
 
             case TURN_TO_BALLS:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, -90)) {
+                if (turnTo(-90)) {
                     resetRelativeEncoder();
                     currentState = State.COLLECT_BALLS;
                 }
@@ -213,38 +213,38 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
             case COLLECT_BALLS:
                 robot.runIntake(1.0);
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth + ARTIFACT_ROW_DEPTH, -90)) {
+                if (driveStraight(ARTIFACT_ROW_DEPTH, -90)) {
                     robot.runIntake(0);
                     currentState = State.REVERSE_FROM_BALLS;
                 }
                 break;
 
             case REVERSE_FROM_BALLS:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, -90)) {
+                if (driveStraight(0, -90)) {
                     currentState = State.TURN_UP_RETURN;
                 }
                 break;
 
             case TURN_UP_RETURN:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE + currentLaneDepth, 0)) {
+                if (turnTo(0)) {
                     currentState = State.RETURN_TO_LANE_START;
                 }
                 break;
 
             case RETURN_TO_LANE_START:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, 0)) {
+                if (driveStraight(0, 0)) {
                     currentState = State.TURN_TO_TAG;
                 }
                 break;
 
             case TURN_TO_TAG:
-                if (performNavigationStep(LANE_ALIGNMENT_DISTANCE, -45)) {
+                if (turnTo(-45)) {
                     currentState = State.DRIVE_TO_SCORE;
                 }
                 break;
 
             case DRIVE_TO_SCORE:
-                if (performNavigationStep(12.0, -45)) {
+                if (driveStraight(12.0, -45)) {
                          currentState = State.SCORE;
                 }
                 break;
