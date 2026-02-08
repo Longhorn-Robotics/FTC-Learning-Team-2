@@ -49,7 +49,9 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private static final double TAG_FIELD_ANGLE = -45.0;
 
     // --- LOCALIZATION MEMORY ---
+    private Pose currentPose = new Pose();
     private boolean tagVisible = false;
+    private int detectedTagID = -1;
     private double lastTagRange = 0;
     private double lastTagBearing = 0;
     private double lastKnownTagRange = 0;
@@ -118,12 +120,37 @@ public class RobotAutonomousFinal extends LinearOpMode {
         }
 
         if (tagVisible) {
-            headingOffset = (TAG_FIELD_ANGLE - lastTagBearing) - imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            // Calculate Heading Offset
+            double rawHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            double tagFieldAngle = (detectedTagID == LocalizationUtils.RED_TAG_ID) ? 45.0 : 315.0;
+            
+            // Note: If detectedTagID is unknown (not 24 or 20), this might be inaccurate, 
+            // but updateLocalization filters for us ideally.
+            // Defaulting to -45 (315) if unknown for safety or handling it? 
+            // The logic below assumes valid ID.
+            
+            headingOffset = (tagFieldAngle - lastTagBearing) - rawHeading;
+            double currentFieldHeading = rawHeading + headingOffset;
+
+            // Initialize Pose
+            currentPose = LocalizationUtils.calculateFieldPose(
+                detectedTagID,
+                lastTagRange,
+                lastTagBearing,
+                currentFieldHeading
+            );
+            
+            if (currentPose == null) {
+                currentPose = new Pose(0, 0, currentFieldHeading); // Fallback
+            }
+
             lastKnownTagRange = lastTagRange;
-            telemetry.addData("Status", "Calibrated! Offset: %.1f", headingOffset);
+            telemetry.addData("Status", "Calibrated!");
+            telemetry.addData("Pose", currentPose.toString());
         } else {
             headingOffset = 0; 
             lastKnownTagRange = 24.0;
+            currentPose = new Pose(0, 0, 0); // Assumption
             telemetry.addData("Status", "Calibration Failed. Using raw IMU.");
         }
         telemetry.update();
@@ -300,6 +327,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
         for (AprilTagDetection detection : detections) {
             if (detection.metadata != null) {
                 tagVisible = true;
+                detectedTagID = detection.id;
                 lastTagRange = detection.ftcPose.range;
                 lastTagBearing = detection.ftcPose.bearing;
                 break;
