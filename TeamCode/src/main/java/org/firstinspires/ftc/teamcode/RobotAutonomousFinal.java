@@ -299,9 +299,38 @@ public class RobotAutonomousFinal extends LinearOpMode {
         return false;
     }
 
+    /**
+     * Sequential Drive Method
+     * Drives the robot straight to a target distance while locking heading with the IMU.
+     */
     private boolean driveStraight(double inches, double targetHeading) {
-        // Placeholder for next task
-        return true;
+        double currentDist = getRelativeEncoderDistance();
+        double distError = inches - currentDist;
+        double headingError = targetHeading - getHeading();
+
+        // Normalize heading error
+        while (headingError > 180) headingError -= 360;
+        while (headingError <= -180) headingError += 360;
+
+        // Telemetry for debugging
+        telemetry.addData("Action", "Driving Straight to %.1f\"", inches);
+        telemetry.addData("Dist Error", "%.1f\"", distError);
+        telemetry.addData("Heading Lock Error", "%.1f", headingError);
+
+        // Check for completion
+        if (Math.abs(distError) < DISTANCE_THRESHOLD) {
+            moveRobot(0, 0);
+            return true;
+        }
+
+        // Calculate power (Proportional Control)
+        double drive = Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
+        double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+
+        telemetry.addData("Drive/Turn Power", "%.2f / %.2f", drive, turn);
+        moveRobot(drive, turn);
+        
+        return false;
     }
 
     private void moveRobot(double x, double yaw) {
