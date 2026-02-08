@@ -2,7 +2,7 @@
 
 ## Phase 1: Sequential Movement Core (IMU-Based)
 - [x] Task: Implement `turnTo(double targetHeading)` using IMU for absolute orientation with real-time telemetry of heading error and motor power. [71f7709]
-- [ ] Task: Implement `driveStraight(double inches, double targetHeading)` using IMU for active steering correction and encoders for distance, with live telemetry of drift correction.
+- [x] Task: Implement `driveStraight(double inches, double targetHeading)` using IMU for active steering correction and encoders for distance, with live telemetry of drift correction. [87e4ed5]
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Sequential Movement Core' (Protocol in workflow.md)
 
 ## Phase 2: Vision & Hybrid Refinement
