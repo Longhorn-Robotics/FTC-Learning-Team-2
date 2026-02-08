@@ -269,44 +269,39 @@ public class RobotAutonomousFinal extends LinearOpMode {
         }
     }
 
-    private boolean performNavigationStep(double targetRangeFromTag, double targetFieldHeading) {
-        double rangeError;
-        double headingError;
+    /**
+     * Sequential Turn Method
+     * Rotates the robot to a specific absolute field heading using the IMU.
+     */
+    private boolean turnTo(double targetHeading) {
+        double headingError = targetHeading - getHeading();
 
-        if (tagVisible) {
-            rangeError = lastTagRange - targetRangeFromTag;
-            
-            // Decoupled Heading Logic:
-            // Use Vision Bearing ONLY if we are facing the tag (approx 45 deg field angle)
-            // Otherwise, strictly use the IMU to avoid the "spiral" effect.
-            if (Math.abs(targetFieldHeading - TAG_FIELD_ANGLE) < 10) {
-                headingError = lastTagBearing;
-            } else {
-                headingError = targetFieldHeading - getHeading();
-            }
-            
-            resetRelativeEncoder();
-            lastKnownTagRange = lastTagRange;
-        } else {
-            double currentEncDist = getRelativeEncoderDistance();
-            double estimatedRange = lastKnownTagRange - currentEncDist;
-            rangeError = estimatedRange - targetRangeFromTag;
-            headingError = targetFieldHeading - getHeading();
-        }
-
+        // Normalize error to -180 to 180
         while (headingError > 180) headingError -= 360;
         while (headingError <= -180) headingError += 360;
 
-        double drive = Range.clip(rangeError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
-        double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+        // Telemetry for debugging
+        telemetry.addData("Action", "Turning to %.1f", targetHeading);
+        telemetry.addData("Heading Error", "%.1f", headingError);
 
-        if (Math.abs(rangeError) < DISTANCE_THRESHOLD && Math.abs(headingError) < HEADING_THRESHOLD) {
+        // Check for completion
+        if (Math.abs(headingError) < HEADING_THRESHOLD) {
             moveRobot(0, 0);
             return true;
         }
 
-        moveRobot(drive, turn);
+        // Calculate power (Proportional Control)
+        double turn = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
+        
+        telemetry.addData("Turn Power", "%.2f", turn);
+        moveRobot(0, turn);
+        
         return false;
+    }
+
+    private boolean driveStraight(double inches, double targetHeading) {
+        // Placeholder for next task
+        return true;
     }
 
     private void moveRobot(double x, double yaw) {
