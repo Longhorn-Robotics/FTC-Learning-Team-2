@@ -130,6 +130,14 @@ public class ConceptLocalizationTest extends OpMode {
         // 3. Get Current Heading (IMU)
         double currentRawHeading = getRawHeading();
         double currentFieldHeading = currentRawHeading + headingOffset;
+        
+        // Manual Reset for Testing
+        if (gamepad1.a) {
+            currentPose = new Pose(0,0,0);
+            headingOffset = -currentRawHeading; // Reset heading to 0
+            currentFieldHeading = 0;
+            telemetry.addData("Debug", "Pose Reset to (0,0,0)");
+        }
 
         if (validDetection != null) {
             // --- VISION VISIBLE: ABSOLUTE CORRECTION ---
@@ -165,7 +173,12 @@ public class ConceptLocalizationTest extends OpMode {
             currentPose.x += deltaX;
             currentPose.y += deltaY;
             currentPose.heading = currentFieldHeading;
+            
+            telemetry.addData("Debug DR", "dX: %.2f, dY: %.2f", deltaX, deltaY);
         }
+        
+        telemetry.addData("Debug Heading", "Raw: %.1f, Off: %.1f, Field: %.1f", 
+            currentRawHeading, headingOffset, currentFieldHeading);
     }
 
     private double getAvgEncoderDistance() {
