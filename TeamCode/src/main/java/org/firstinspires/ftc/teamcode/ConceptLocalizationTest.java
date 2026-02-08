@@ -40,8 +40,7 @@ public class ConceptLocalizationTest extends OpMode {
 
     // --- STATE ---
     private Pose currentPose = new Pose(0, 0, 0); // Start at (0,0,0) assumption
-    private Pose lastAnchorPose = new Pose(0, 0, 0); // The last position confirmed by Vision
-    private double lastAnchorEncoder = 0; // Encoder average at the moment of last visual lock
+    private double lastLoopEncoder = 0; // Encoder value from the previous loop iteration
     private boolean tagVisible = false;
     
     private double headingOffset = 0; // Calibration offset for IMU
@@ -71,6 +70,9 @@ public class ConceptLocalizationTest extends OpMode {
 
         // Vision
         initVision();
+        
+        // Initialize encoder state
+        lastLoopEncoder = getAvgEncoderDistance();
 
         telemetry.addData("Status", "Initialized - Drive to a Tag!");
         telemetry.update();
@@ -86,9 +88,9 @@ public class ConceptLocalizationTest extends OpMode {
         // 2. Localization Update
         updateHybridPose();
 
-        // 3. Telemetry Dashboard
+        // 3. Telemetry Dashboard - ALWAYS DISPLAYED
         telemetry.addData("--- FIELD LOCALIZATION ---", "");
-        telemetry.addData("Source", tagVisible ? "VISION (Absolute)" : "DEAD RECKONING (Estimated)");
+        telemetry.addData("Source", tagVisible ? "VISION (Absolute)" : "DEAD RECKONING (Integrated)");
         telemetry.addData("Field X", "%.1f\"", currentPose.x);
         telemetry.addData("Field Y", "%.1f\"", currentPose.y);
         telemetry.addData("Heading", "%.1f°", currentPose.heading);
@@ -97,6 +99,10 @@ public class ConceptLocalizationTest extends OpMode {
         telemetry.addData("Red Tag (24)", "45.0°");
         telemetry.addData("Blue Tag (20)", "315.0°");
         
+        if (!tagVisible) {
+            telemetry.addData("Status", "Tag Lost - DEAD RECKONING ACTIVE");
+        }
+        
         telemetry.addData("--- RAW SENSORS ---", "");
         telemetry.addData("Enc Dist", "%.1f\"", getAvgEncoderDistance());
         telemetry.addData("IMU Yaw", "%.1f°", getRawHeading());
@@ -104,10 +110,15 @@ public class ConceptLocalizationTest extends OpMode {
     }
 
     private void updateHybridPose() {
+        // 1. Calculate Encoder Delta (since last loop)
+        double currentEncoder = getAvgEncoderDistance();
+        double deltaDistance = currentEncoder - lastLoopEncoder;
+        lastLoopEncoder = currentEncoder; // Update for next loop
+
+        // 2. Get Vision Data
         List<AprilTagDetection> detections = aprilTag.getDetections();
         AprilTagDetection validDetection = null;
 
-        // Find a relevant tag
         for (AprilTagDetection detection : detections) {
             if (detection.metadata != null && 
                (detection.id == LocalizationUtils.RED_TAG_ID || detection.id == LocalizationUtils.BLUE_TAG_ID)) {
@@ -116,59 +127,44 @@ public class ConceptLocalizationTest extends OpMode {
             }
         }
 
+        // 3. Get Current Heading (IMU)
         double currentRawHeading = getRawHeading();
+        double currentFieldHeading = currentRawHeading + headingOffset;
 
         if (validDetection != null) {
-            // --- VISION VISIBLE: RESET ANCHOR ---
+            // --- VISION VISIBLE: ABSOLUTE CORRECTION ---
             tagVisible = true;
             
-            // 1. Calculate Absolute Heading based on Tag
-            // If looking at Red Tag (45 deg field location), Robot Heading = 45 - Tag Bearing?
-            // Spec: Tag 24 is at Top Right. If we face it, we are facing 45 deg?
-            // Let's assume the user wants 45 deg to be the bearing TO the tag.
-            // But 'heading' is the robot's orientation.
-            // Using LocalizationUtils logic:
-            // We assume robotHeading + bearing = angle_to_tag.
+            // Calculate absolute heading offset
+            double tagFieldAngle = (validDetection.id == LocalizationUtils.RED_TAG_ID) ? 45.0 : 315.0;
+            headingOffset = (tagFieldAngle - validDetection.ftcPose.bearing) - currentRawHeading;
             
-            // For calibration test: 
-            // We trust the IMU's relative changes, but snap absolute value if we see a known tag?
-            // Let's keep it simple: Use LocalizationUtils to get Pose based on current IMU.
+            // Recalculate heading with new offset
+            currentFieldHeading = currentRawHeading + headingOffset;
             
-            double calibratedHeading = currentRawHeading + headingOffset;
-            
-            currentPose = LocalizationUtils.calculateFieldPose(
+            // Calculate Absolute Pose from Vision
+            Pose visionPose = LocalizationUtils.calculateFieldPose(
                     validDetection.id,
                     validDetection.ftcPose.range,
                     validDetection.ftcPose.bearing,
-                    calibratedHeading
+                    currentFieldHeading
             );
             
-            // Update Anchors for Dead Reckoning
-            if (currentPose != null) {
-                lastAnchorPose = new Pose(currentPose.x, currentPose.y, currentPose.heading);
-                lastAnchorEncoder = getAvgEncoderDistance();
+            if (visionPose != null) {
+                currentPose = visionPose;
             }
         } else {
-            // --- VISION LOST: DEAD RECKONING ---
+            // --- VISION LOST: INCREMENTAL DEAD RECKONING ---
             tagVisible = false;
             
-            double currentEncoder = getAvgEncoderDistance();
-            double distanceDelta = currentEncoder - lastAnchorEncoder;
-            double currentHeading = currentRawHeading + headingOffset;
+            // Integrate position based on previous pose + delta vector
+            double theta = Math.toRadians(currentFieldHeading);
+            double deltaX = deltaDistance * Math.sin(theta);
+            double deltaY = deltaDistance * Math.cos(theta);
             
-            // Calculate change in position based on heading
-            // Note: This is a simple linear approximation (Arc motion would be better but this is sufficient for fallback)
-            // X += d * sin(theta)
-            // Y += d * cos(theta)
-            double theta = Math.toRadians(currentHeading);
-            double deltaX = distanceDelta * Math.sin(theta);
-            double deltaY = distanceDelta * Math.cos(theta);
-            
-            currentPose = new Pose(
-                lastAnchorPose.x + deltaX,
-                lastAnchorPose.y + deltaY,
-                currentHeading
-            );
+            currentPose.x += deltaX;
+            currentPose.y += deltaY;
+            currentPose.heading = currentFieldHeading;
         }
     }
 
