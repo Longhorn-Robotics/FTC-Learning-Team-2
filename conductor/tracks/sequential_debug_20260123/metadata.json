@@ -2,7 +2,7 @@
   "track_id": "sequential_debug_20260123",
   "type": "feature",
   "status": "new",
-  "created_at": "2026-01-23T14:15:00Z",
-  "updated_at": "2026-01-23T14:15:00Z",
-  "description": "Refactor and debug RobotAutonomousFinal.java into a robust sequential routine using AprilTag ID 24."
+  "created_at": "2026-01-23T14:20:00Z",
+  "updated_at": "2026-01-23T14:20:00Z",
+  "description": "Refactor and debug RobotAutonomousFinal.java into a robust sequential routine using AprilTag ID 24 and CW-positive field coordinates."
 }

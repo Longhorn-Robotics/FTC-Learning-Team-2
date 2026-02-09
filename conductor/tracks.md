@@ -19,5 +19,5 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [~] **Track: Refactor and debug RobotAutonomousFinal.java into a robust sequential routine using AprilTag ID 24.**
+- [~] **Track: Refactor and debug RobotAutonomousFinal.java into a robust sequential routine using AprilTag ID 24 and CW-positive field coordinates.**
   *Link: [./tracks/sequential_debug_20260123/](./tracks/sequential_debug_20260123/)*

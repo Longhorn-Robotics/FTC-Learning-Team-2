@@ -42,28 +42,27 @@ public class RobotAutonomousFinal extends LinearOpMode {
     private static final double MAX_SPEED = 0.4; 
     private static final double MAX_TURN = 0.25; 
     private static final double SPEED_GAIN = 0.03;
-    private static final double TURN_GAIN = 0.015; 
-    private static final double HEADING_THRESHOLD = 1.0; // Tighten for accuracy
+    private static final double TURN_GAIN = 0.015;
+    private static final double HEADING_THRESHOLD = 1.0; 
     private static final double DISTANCE_THRESHOLD = 1.0; 
 
     // --- FIELD CONFIGURATION ---
     private static final int TARGET_TAG_ID = 24; 
-    // Tag is at the Top-Right corner (45 degrees in Field Coordinates)
-    private static final double TAG_FIELD_HEADING = 45.0;
+    private static final double TAG_FIELD_HEADING = 45.0; // Top-Right corner
 
     // --- LOCALIZATION MEMORY ---
     private boolean tagVisible = false;
     private double lastTagRange = 0;
     private double lastTagBearing = 0;
     private double headingOffset = 0; // Field Heading = Raw IMU + Offset
-    private double startEncoderPos = 0; // Anchor for relative moves
+    private double startEncoderPos = 0; 
 
     // --- STATE MACHINE ---
     private enum State {
         INIT,
         CALIBRATE_HEADING,
-        TEST_SEQ_TURN,  // Phase 1 Test
-        TEST_SEQ_DRIVE, // Phase 1 Test
+        TEST_SEQ_TURN,  
+        TEST_SEQ_DRIVE, 
         DONE
     }
     private State currentState = State.INIT;
@@ -73,24 +72,21 @@ public class RobotAutonomousFinal extends LinearOpMode {
         // 1. Initialize Hardware
         robot.AutoInit(hardwareMap);
 
-        // Encoder Setup (Direction must match RobotHardware logic)
         leftEncoder = hardwareMap.get(DcMotor.class, "ld");
         rightEncoder = hardwareMap.get(DcMotor.class, "rd");
-        leftEncoder.setDirection(DcMotor.Direction.REVERSE);
-        rightEncoder.setDirection(DcMotor.Direction.FORWARD);
+        leftEncoder.setDirection(DcMotor.Direction.FORWARD);
+        rightEncoder.setDirection(DcMotor.Direction.REVERSE);
         
         leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         leftEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightEncoder.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        // IMU Setup
         imu = hardwareMap.get(IMU.class, "imu");
         imu.initialize(new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD)));
+                RevHubOrientationOnRobot.UsbFacingDirection.LEFT)));
 
-        // Vision Setup
         initVision();
 
         telemetry.addData("Status", "Initialized - Phase 1 Core");
@@ -109,7 +105,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
             updateLocalization();
             updateTelemetry();
 
-            // Safety Timer
             if (autoTimer.seconds() > 29.0) {
                 currentState = State.DONE;
             }
@@ -119,28 +114,22 @@ public class RobotAutonomousFinal extends LinearOpMode {
                     break;
 
                 case CALIBRATE_HEADING:
-                    // We assume robot starts facing roughly towards the tag (45 deg field).
-                    // We wait for visibility to lock the offset.
+                    // Use Tag 24 to find absolute field orientation
                     if (tagVisible) {
-                        // Math: RobotHeading = TagFieldHeading - TagBearing
-                        // If facing tag directly (Bearing 0), RobotHeading = 45.
-                        // If turned left 10 deg (Heading 55), Tag is to right (Bearing -10). 45 - (-10) = 55.
                         double currentRawHeading = getRawHeading();
+                        // FieldHeading = RawHeading + Offset -> Offset = FieldHeading - RawHeading
                         double fieldHeading = TAG_FIELD_HEADING - lastTagBearing;
                         headingOffset = fieldHeading - currentRawHeading;
-                        
-                        telemetry.addData("Calibration", "LOCKED");
-                        telemetry.addData("Offset", headingOffset);
-                        
-                        // Proceed to testing the sequential moves
                         currentState = State.TEST_SEQ_TURN;
-                    } else {
-                        telemetry.addData("Calibration", "WAITING FOR TAG...");
+                    } else if (autoTimer.seconds() > 3.0) {
+                        // Fallback: assume start is 45.0
+                        headingOffset = 45.0 - getRawHeading();
+                        currentState = State.TEST_SEQ_TURN;
                     }
                     break;
 
                 case TEST_SEQ_TURN:
-                    // Test: Turn to 0 degrees (Up)
+                    // Turn to face 0 degrees (Up/North)
                     if (turnTo(0.0)) {
                         resetRelativeEncoder();
                         currentState = State.TEST_SEQ_DRIVE;
@@ -148,7 +137,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
                     break;
 
                 case TEST_SEQ_DRIVE:
-                    // Test: Drive 12 inches forward at 0 degrees
+                    // Drive 12 inches Forward at 0 degrees
                     if (driveStraight(12.0, 0.0)) {
                         currentState = State.DONE;
                     }
@@ -159,18 +148,19 @@ public class RobotAutonomousFinal extends LinearOpMode {
                     break;
             }
         }
-        visionPortal.close();
+        if (visionPortal != null) {
+            visionPortal.close();
+        }
     }
 
     /**
-     * Phase 1: Sequential Turn
-     * Rotates the robot to a specific absolute field heading using the IMU.
+     * Sequential Turn
+     * Hardware Fix: Inverted error to match user's physical motor/mixer behavior.
      */
     private boolean turnTo(double targetHeading) {
         double currentHeading = getFieldHeading();
-        double headingError = targetHeading - currentHeading;
+        double headingError = targetHeading - currentHeading; 
 
-        // Normalize error to -180 to +180
         while (headingError > 180) headingError -= 360;
         while (headingError <= -180) headingError += 360;
 
@@ -182,14 +172,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
             return true;
         }
 
-        // P-Controller
-        // Mixer: Left = x - yaw.
-        // If Error is Positive (Target > Current), we need to turn Left (CCW).
-        // Positive Yaw in Mixer (-yaw) -> Left Power Decrease?
-        // Wait: Left = x - yaw. If yaw is positive, Left decreases, Right increases (x + yaw).
-        // Right > Left -> Turn LEFT (CCW).
-        // So Positive Yaw = CCW Turn.
-        // Positive Error -> Needs CCW Turn -> Positive Yaw.
+        // Apply Gain. Positive Yaw in Mixer = LEFT Turn.
         double turnPower = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
         
         moveRobot(0, turnPower);
@@ -197,9 +180,8 @@ public class RobotAutonomousFinal extends LinearOpMode {
     }
 
     /**
-     * Phase 1: Sequential Drive
-     * Drives a set distance while actively locking heading.
-     * Currently purely Encoder/IMU based as requested for core logic verification.
+     * Sequential Drive
+     * Hardware Fix: Inverted drivePower because positive power moved robot backward.
      */
     private boolean driveStraight(double targetInches, double targetHeading) {
         double currentDist = getRelativeEncoderDistance();
@@ -208,7 +190,6 @@ public class RobotAutonomousFinal extends LinearOpMode {
         double currentHeading = getFieldHeading();
         double headingError = targetHeading - currentHeading;
 
-        // Normalize heading error
         while (headingError > 180) headingError -= 360;
         while (headingError <= -180) headingError += 360;
 
@@ -219,7 +200,8 @@ public class RobotAutonomousFinal extends LinearOpMode {
             return true;
         }
 
-        double drivePower = Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
+        // Invert drivePower sign to fix "Backward" bug
+        double drivePower = -Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
         double turnPower = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
 
         moveRobot(drivePower, turnPower);
@@ -228,12 +210,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
     /**
      * Tank Drive Mixer (User Provided)
-     * Left = x - yaw
-     * Right = x + yaw
-     * 
-     * Analysis:
-     * If Yaw > 0: Left decreases, Right increases. Robot turns LEFT (CCW).
-     * If X > 0: Both increase. Robot moves FORWARD.
+     * Left = x - yaw, Right = x + yaw
      */
     private void moveRobot(double x, double yaw) {
         double leftPower    = x - yaw;
@@ -271,8 +248,8 @@ public class RobotAutonomousFinal extends LinearOpMode {
     }
 
     private void updateTelemetry() {
-        telemetry.addData("Tag", tagVisible ? "VISIBLE" : "LOST");
         telemetry.addData("Heading (Field)", "%.1f", getFieldHeading());
+        telemetry.addData("Enc Dist", "%.1f", getRelativeEncoderDistance());
         telemetry.update();
     }
 
