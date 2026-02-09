@@ -5,10 +5,10 @@
 - [x] Task: Implement `driveStraight(double inches, double targetHeading)` using IMU for active steering correction and encoders for distance, with live telemetry of drift correction. [08a0aaa]
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Sequential Movement Core' (Protocol in workflow.md)
 
-## Phase 2: Vision & Hybrid Refinement
-- [ ] Task: Filter AprilTag detections by ID (Target Tag: 24 at 45°) and integrate visual distance into `driveStraight`.
-- [ ] Task: Implement "Visual Re-Lock" logic to update the robot's perceived position whenever Tag 24 is seen.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Vision & Hybrid Refinement' (Protocol in workflow.md)
+## Phase 2: Vision & Hybrid Refinement [checkpoint: 1118fae]
+- [x] Task: Filter AprilTag detections by ID (Target Tag: 24 at 45°) and integrate visual distance into `driveStraight`. [3474a67]
+- [x] Task: Implement "Visual Re-Lock" logic to update the robot's perceived position whenever Tag 24 is seen. [3474a67]
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Vision & Hybrid Refinement' (Protocol in workflow.md)
 
 ## Phase 3: Sequential State Machine Implementation
 - [ ] Task: Refactor the main loop into the 11-step sequence defined in `spec.md`.
