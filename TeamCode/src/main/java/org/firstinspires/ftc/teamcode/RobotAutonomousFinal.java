@@ -74,8 +74,8 @@ public class RobotAutonomousFinal extends LinearOpMode {
 
         leftEncoder = hardwareMap.get(DcMotor.class, "ld");
         rightEncoder = hardwareMap.get(DcMotor.class, "rd");
-        leftEncoder.setDirection(DcMotor.Direction.FORWARD);
-        rightEncoder.setDirection(DcMotor.Direction.REVERSE);
+        leftEncoder.setDirection(DcMotor.Direction.REVERSE);
+        rightEncoder.setDirection(DcMotor.Direction.FORWARD);
         
         leftEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         rightEncoder.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -201,7 +201,7 @@ public class RobotAutonomousFinal extends LinearOpMode {
         }
 
         // Invert drivePower sign to fix "Backward" bug
-        double drivePower = -Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
+        double drivePower = Range.clip(distError * SPEED_GAIN, -MAX_SPEED, MAX_SPEED);
         double turnPower = Range.clip(headingError * TURN_GAIN, -MAX_TURN, MAX_TURN);
 
         moveRobot(drivePower, turnPower);
