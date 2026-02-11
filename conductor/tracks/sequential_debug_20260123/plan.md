@@ -18,4 +18,4 @@
 ## Phase 4: End-Game & Safety [checkpoint: 23e8696]
 - [x] Task: Integrate 25s timer check to trigger launch zone exit. [95af8ca]
 - [x] Task: Final pass on telemetry formatting to ensure "Robot's understanding of its position" is visible. [95af8ca]
-- [x] Task: Conductor - User Manual Verification 'Phase 4: End-Game & Safety' (Protocol in workflow.md)
+- [ ] Task: Conductor - User Manual Verification 'Phase 4: End-Game & Safety' (Protocol in workflow.md)
