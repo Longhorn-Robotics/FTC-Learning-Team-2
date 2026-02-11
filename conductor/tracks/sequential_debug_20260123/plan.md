@@ -15,7 +15,7 @@
 - [x] Task: Calibrate specific field angles (Tag=45°, Up=0°, Right=90°) and validate transitions with detailed state telemetry. [95af8ca]
 - [ ] Task: Conductor - User Manual Verification 'Phase 3: Sequential State Machine Implementation' (Protocol in workflow.md)
 
-## Phase 4: End-Game & Safety
-- [ ] Task: Integrate 25s timer check to trigger launch zone exit.
-- [ ] Task: Final pass on telemetry formatting to ensure "Robot's understanding of its position" is visible.
-- [ ] Task: Conductor - User Manual Verification 'Phase 4: End-Game & Safety' (Protocol in workflow.md)
+## Phase 4: End-Game & Safety [checkpoint: 23e8696]
+- [x] Task: Integrate 25s timer check to trigger launch zone exit. [95af8ca]
+- [x] Task: Final pass on telemetry formatting to ensure "Robot's understanding of its position" is visible. [95af8ca]
+- [x] Task: Conductor - User Manual Verification 'Phase 4: End-Game & Safety' (Protocol in workflow.md)
