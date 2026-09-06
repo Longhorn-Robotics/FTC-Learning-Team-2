@@ -18,8 +18,8 @@ public class LocalizationTest extends LinearOpMode {
     private AprilTagProcessor aprilTag;
     private IMU imu;
     private static final double FX = 357.1;
-    private static final double FY = 357.1;
-    private static final double CX = 159.5;
+    private static final double FY = 476.2;
+    private static final double CX = 357.1;
     private static final double CY = 119.5;
 
     @Override
@@ -38,6 +38,7 @@ public class LocalizationTest extends LinearOpMode {
                 .addProcessor(aprilTag)
                 .setCameraResolution(new Size(320, 240))
                 .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .enableLiveView(true)
                 .build();
 
         telemetry.addData("Status", "Ready. Place robot at center field.");
@@ -48,7 +49,9 @@ public class LocalizationTest extends LinearOpMode {
         while (opModeIsActive()) {
             double heading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
             List<AprilTagDetection> detections = aprilTag.getDetections();
-            
+            telemetry.addData("AprilTags", detections);
+            telemetry.addData("Vision FPS", "%.1f", visionPortal.getFps());
+            telemetry.addData("Detection Count", detections.size());
             boolean tagSeen = false;
             for (AprilTagDetection detection : detections) {
                 if (detection.metadata != null) {
@@ -66,7 +69,7 @@ public class LocalizationTest extends LinearOpMode {
             }
 
             if (!tagSeen) {
-                telemetry.addData("Status", "No Tag Detected");
+                //telemetry.addData("Status", "No Tag Detected");
             }
             telemetry.update();
         }

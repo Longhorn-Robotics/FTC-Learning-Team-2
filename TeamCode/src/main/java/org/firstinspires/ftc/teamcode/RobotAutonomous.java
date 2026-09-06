@@ -180,7 +180,7 @@ public class RobotAutonomous extends LinearOpMode {
 
     // Initialize the ball Detection process
     private ColorBlobLocatorProcessor colorLocatorPurple = new ColorBlobLocatorProcessor.Builder()
-            .setTargetColorRange(ColorRange.ARTIFACT_PURPLE)   // Use a predefined color match
+            .setTargetColorRange(ColorRange.GREEN)   // Use a predefined color match
             .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
             .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1))
             .setDrawContours(true)   // Show contours on the Stream Preview
